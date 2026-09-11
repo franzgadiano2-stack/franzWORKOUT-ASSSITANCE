@@ -1,5 +1,5 @@
+// FRANZ WORKOUT ASSISTANCE - WORKOUT DATABASE
 const workouts = [
-
     // =========================
     // CHEST
     // =========================
