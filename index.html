@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRANZ WORKOUT ASSISTANCE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="logo">FRANZ<span>WORKOUT</span></div>
+
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#workouts">Workouts</a>
+            <a href="#health">Health Guide</a>
+            <a href="#about">About</a>
+        </div>
+    </nav>
+
+    <!-- HOME -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <p class="small-title">WELCOME TO</p>
+
+            <h1>
+                FRANZ WORKOUT
+                <br>
+                <span>ASSISTANCE</span>
+            </h1>
+
+            <p class="hero-text">
+                Your personal workout assistance system designed to help you
+                choose exercises, understand their fitness benefits, and
+                organize your workout routine.
+            </p>
+
+            <div class="hero-buttons">
+                <a href="#workouts" class="main-button">START WORKOUT</a>
+                <a href="#health" class="secondary-button">HEALTH GUIDE</a>
+            </div>
+        </div>
+
+        <div class="hero-info">
+            <div class="hero-info-card">
+                <span>07</span>
+                <p>Workout Categories</p>
+            </div>
+
+            <div class="hero-info-card">
+                <span>19</span>
+                <p>Exercises</p>
+            </div>
+
+            <div class="hero-info-card">
+                <span>100%</span>
+                <p>Workout Assistance</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WORKOUTS -->
+    <section id="workouts" class="section">
+
+        <div class="section-title">
+            <p>EXERCISE LIBRARY</p>
+            <h2>Choose Your Workout</h2>
+            <span>
+                Select a workout category to discover exercises and their
+                fitness benefits.
+            </span>
+        </div>
+
+        <!-- WORKOUT CATEGORY CARDS -->
+        <div class="category-grid">
+
+            <div class="category-card" onclick="filterWorkouts('Chest')">
+                <div class="category-image">
+                    <img src="../IMAGES/chest.png" alt="Chest Workout">
+                </div>
+                <div class="category-content">
+                    <span class="category-number">01</span>
+                    <h3>CHEST</h3>
+                    <p>Exercises designed to train the chest and upper-body muscles.</p>
+                    <span class="view-category">VIEW WORKOUTS →</span>
+                </div>
+            </div>
+
+            <div class="category-card" onclick="filterWorkouts('Back')">
+                <div class="category-image">
+                    <img src="../IMAGES/back.png" alt="Back Workout">
+                </div>
+                <div class="category-content">
+                    <span class="category-number">02</span>
+                    <h3>BACK</h3>
+                    <p>Exercises that target the back and pulling muscles.</p>
+                    <span class="view-category">VIEW WORKOUTS →</span>
+                </div>
+            </div>
+
+            <div class="category-card" onclick="filterWorkouts('Legs')">
+                <div class="category-image">
+                    <img src="../IMAGES/leg.png" alt="Leg Workout">
+                </div>
+                <div class="category-content">
+                    <span class="category-number">03</span>
+                    <h3>LEGS</h3>
+                    <p>Exercises for lower-body strength, balance, and endurance.</p>
+                    <span class="view-category">VIEW WORKOUTS →</span>
+                </div>
+            </div>
+
+            <div class="category-card" onclick="filterWorkouts('Cardio')">
+                <div class="category-image">
+                    <img src="../IMAGES/cardio.png" alt="Cardio Workout">
+                </div>
+                <div class="category-content">
+                    <span class="category-number">04</span>
+                    <h3>CARDIO</h3>
+                    <p>Activities that help improve cardiovascular fitness and endurance.</p>
+                    <span class="view-category">VIEW WORKOUTS →</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FIND YOUR WORKOUT -->
+        <div class="finder-section">
+            <div class="finder-header">
+                <p>PERSONALIZED WORKOUT FINDER</p>
+                <h2>Find an Exercise That Fits You</h2>
+                <span>
+                    Choose a fitness goal and experience level to see suitable
+                    exercises from our library.
+                </span>
+            </div>
+
+            <div class="finder-form">
+
+                <div class="finder-field">
+                    <label for="fitnessGoal">FITNESS GOAL</label>
+                    <select id="fitnessGoal">
+                        <option value="general">General Fitness</option>
+                        <option value="strength">Strength</option>
+                        <option value="cardio">Cardio & Endurance</option>
+                        <option value="upper">Upper Body</option>
+                        <option value="lower">Lower Body</option>
+                        <option value="core">Core</option>
+                        <option value="mobility">Movement & Mobility</option>
+                    </select>
+                </div>
+
+                <div class="finder-field">
+                    <label for="fitnessLevel">EXPERIENCE LEVEL</label>
+                    <select id="fitnessLevel">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                    </select>
+                </div>
+
+                <button class="find-button" onclick="findRecommendedWorkouts()">
+                    FIND EXERCISES
+                </button>
+            </div>
+
+            <div id="recommendationResults" class="recommendation-results"></div>
+
+            <p class="finder-note">
+                This tool provides general fitness suggestions, not medical
+                advice. Choose activities that feel appropriate for your
+                current ability and stop if you feel pain, dizziness, or unwell.
+            </p>
+        </div>
+
+        <!-- QUICK FILTER -->
+        <div class="quick-filter">
+            <p>QUICK FILTER</p>
+
+            <div class="categories">
+                <button onclick="filterWorkouts('All')">ALL</button>
+                <button onclick="filterWorkouts('Chest')">CHEST</button>
+                <button onclick="filterWorkouts('Back')">BACK</button>
+                <button onclick="filterWorkouts('Shoulders')">SHOULDERS</button>
+                <button onclick="filterWorkouts('Arms')">ARMS</button>
+                <button onclick="filterWorkouts('Legs')">LEGS</button>
+                <button onclick="filterWorkouts('Core')">CORE</button>
+                <button onclick="filterWorkouts('Cardio')">CARDIO</button>
+            </div>
+        </div>
+
+        <!-- WORKOUT RESULTS -->
+        <div id="workoutResults" class="workout-results">
+            <div class="results-header">
+                <div>
+                    <p>WORKOUT LIBRARY</p>
+                    <h2 id="resultsTitle">All Exercises</h2>
+                    <span id="resultsDescription">Browse all available exercises.</span>
+                </div>
+            </div>
+
+            <div id="workoutContainer" class="workout-container"></div>
+        </div>
+
+    </section>
+
+    <!-- HEALTH GUIDE -->
+    <section id="health" class="health-section">
+
+        <div class="section-title">
+            <p>FITNESS INFORMATION</p>
+            <h2>What Type of Workout Is Good for You?</h2>
+            <span>
+                Different types of physical activity provide different fitness benefits.
+            </span>
+        </div>
+
+        <div class="health-grid">
+
+            <div class="health-card">
+                <div class="health-icon">💪</div>
+                <h3>Strength Training</h3>
+                <p>
+                    Resistance exercises can help improve muscular strength
+                    and support everyday physical activities.
+                </p>
+                <strong>Examples</strong>
+                <p>Squats, push-ups, rows, presses</p>
+            </div>
+
+            <div class="health-card">
+                <div class="health-icon">❤️</div>
+                <h3>Cardiovascular Exercise</h3>
+                <p>
+                    Cardio activities can help improve cardiovascular fitness
+                    and endurance.
+                </p>
+                <strong>Examples</strong>
+                <p>Walking, jogging, cycling, swimming</p>
+            </div>
+
+            <div class="health-card">
+                <div class="health-icon">🧘</div>
+                <h3>Flexibility & Mobility</h3>
+                <p>
+                    Mobility and flexibility activities can help maintain
+                    comfortable movement and range of motion.
+                </p>
+                <strong>Examples</strong>
+                <p>Stretching, mobility drills, yoga</p>
+            </div>
+
+            <div class="health-card">
+                <div class="health-icon">🔥</div>
+                <h3>Full Body Fitness</h3>
+                <p>
+                    Combining strength, cardio, and mobility can provide a
+                    balanced approach to fitness.
+                </p>
+                <strong>Examples</strong>
+                <p>Circuit training, walking, bodyweight exercises</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="about-section">
+        <div class="about-content">
+            <p class="small-title">ABOUT THE SYSTEM</p>
+            <h2>FRANZ WORKOUT ASSISTANCE</h2>
+
+            <p>
+                FRANZ WORKOUT ASSISTANCE is a workout assistance system designed
+                to help users explore exercises, understand their fitness
+                benefits, and organize their workout routines.
+            </p>
+
+            <p class="warning">
+                Fitness information provided by this website is for general
+                educational purposes and is not a substitute for advice from
+                a qualified healthcare or fitness professional.
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-logo">FRANZ<span>WORKOUT</span></div>
+        <p>FRANZ WORKOUT ASSISTANCE</p>
+        <p class="copyright">© 2026 FRANZ WORKOUT ASSISTANCE</p>
+    </footer>
+
+    <!-- WORKOUT DATA + MAIN JAVASCRIPT -->
+    <script src="../WORKOUTJS/workouts.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
