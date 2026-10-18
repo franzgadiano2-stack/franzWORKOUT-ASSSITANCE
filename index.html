@@ -719,5 +719,89 @@
 <script src="script.js"></script>
 
 </body>
+
+
+    ```
+<!-- ACCOUNT ACCESS -->
+<section id="accountSection" class="account-section">
+    <div class="account-card">
+        <p class="small-title">MEMBER ACCESS</p>
+        <h2>YOUR FITNESS ACCOUNT</h2>
+        <p>Sign in or create an account to save your profile and workout history.</p>
+
+        <div class="account-tabs">
+            <button type="button" id="showLoginBtn" class="account-tab active">
+                LOG IN
+            </button>
+            <button type="button" id="showRegisterBtn" class="account-tab">
+                REGISTER
+            </button>
+        </div>
+
+        <form id="loginForm">
+            <label for="loginUsername">Username</label>
+            <input
+                type="text"
+                id="loginUsername"
+                autocomplete="username"
+                minlength="3"
+                maxlength="30"
+                required
+            >
+
+            <label for="loginPassword">Password</label>
+            <input
+                type="password"
+                id="loginPassword"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit" class="main-button account-submit">
+                LOG IN
+            </button>
+        </form>
+
+        <form id="registerForm" hidden>
+            <label for="registerUsername">Choose a username</label>
+            <input
+                type="text"
+                id="registerUsername"
+                autocomplete="username"
+                minlength="3"
+                maxlength="30"
+                pattern="[A-Za-z0-9_]+"
+                title="Use letters, numbers, and underscores only."
+                required
+            >
+
+            <label for="registerPassword">Create a password</label>
+            <input
+                type="password"
+                id="registerPassword"
+                autocomplete="new-password"
+                minlength="8"
+                required
+            >
+
+            <label for="confirmPassword">Confirm password</label>
+            <input
+                type="password"
+                id="confirmPassword"
+                autocomplete="new-password"
+                minlength="8"
+                required
+            >
+
+            <button type="submit" class="main-button account-submit">
+                CREATE ACCOUNT
+            </button>
+        </form>
+
+        <p id="accountMessage" role="status" aria-live="polite"></p>
+    </div>
+</section>
+```
+
 </html>
 
