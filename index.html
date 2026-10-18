@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,805 +8,1193 @@
     <title>FRANZ WORKOUT ASSISTANCE</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Keep hidden elements hidden even if other CSS sets display. */
+        #mainWebsite[hidden],
+        #accountSection[hidden] {
+            display: none !important;
+        }
+
+        /* ACCOUNT PAGE */
+        .account-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 18px;
+            background:
+                radial-gradient(circle at top right, #352014, transparent 40%),
+                #101010;
+            color: #ffffff;
+        }
+
+        .account-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 35px;
+            border: 1px solid #333333;
+            border-radius: 16px;
+            background: #191919;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .account-brand {
+            margin-bottom: 25px;
+            color: #ff3c00;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .account-card h1 {
+            margin-bottom: 10px;
+            font-size: 29px;
+        }
+
+        .account-description {
+            margin-bottom: 25px;
+            color: #bbbbbb;
+            line-height: 1.6;
+        }
+
+        .account-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .account-tab {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid #444444;
+            border-radius: 7px;
+            background: #242424;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .account-tab.active {
+            border-color: #ff3c00;
+            background: #ff3c00;
+            color: #ffffff;
+        }
+
+        .account-form label {
+            display: block;
+            margin: 16px 0 8px;
+            color: #eeeeee;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .account-form input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #444444;
+            border-radius: 7px;
+            outline: none;
+            background: #101010;
+            color: #ffffff;
+            font-size: 15px;
+        }
+
+        .account-form input:focus {
+            border-color: #ff3c00;
+        }
+
+        .account-submit {
+            display: block;
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            background: #ff3c00;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .account-submit:disabled {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
+        .account-message {
+            min-height: 24px;
+            margin-top: 18px;
+            color: #ffb199;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .account-note {
+            margin-top: 20px;
+            color: #999999;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        /* LOGGED-IN ACCOUNT BAR */
+        .member-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 12px 5%;
+            background: #191919;
+            border-bottom: 1px solid #333333;
+            color: #ffffff;
+        }
+
+        .member-bar strong {
+            color: #ff3c00;
+        }
+
+        .logout-button {
+            padding: 9px 15px;
+            border: 1px solid #ff3c00;
+            border-radius: 6px;
+            background: transparent;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background: #ff3c00;
+        }
+
+        @media (max-width: 480px) {
+            .account-card {
+                padding: 25px 20px;
+            }
+
+            .account-card h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- =========================
-         NAVIGATION
-    ========================== -->
-    <nav class="navbar">
+    <!-- =========================================
+         LOGIN AND REGISTRATION
+         This is the first screen visitors see.
+    ========================================== -->
 
-        <div class="logo">
-            FRANZ<span>WORKOUT</span>
-        </div>
+    <section id="accountSection" class="account-section">
 
-        <div class="nav-links">
-            <a href="#home">Home</a>
-            <a href="#workouts">Workouts</a>
-            <a href="#health">Health Guide</a>
-            <a href="#about">About</a>
-        </div>
+        <div class="account-card">
 
-    </nav>
+            <div class="account-brand">
+                FRANZ WORKOUT ASSISTANCE
+            </div>
 
+            <h1 id="accountHeading">Welcome Back</h1>
 
-    <!-- =========================
-         HOME
-    ========================== -->
-    <section id="home" class="hero">
-
-        <div class="hero-content">
-
-            <p class="small-title">
-                WELCOME TO
+            <p class="account-description" id="accountDescription">
+                Log in to access your workouts, recommendations, and fitness tools.
             </p>
 
-            <h1>
-                FRANZ WORKOUT
-                <br>
-                <span>ASSISTANCE</span>
-            </h1>
+            <div class="account-tabs">
 
-            <p class="hero-text">
-                Your personal workout assistance system designed to help you
-                choose exercises, understand their fitness benefits, and
-                organize your workout routine.
+                <button
+                    type="button"
+                    id="showLoginBtn"
+                    class="account-tab active">
+                    LOG IN
+                </button>
+
+                <button
+                    type="button"
+                    id="showRegisterBtn"
+                    class="account-tab">
+                    REGISTER
+                </button>
+
+            </div>
+
+            <!-- LOGIN FORM -->
+
+            <form id="loginForm" class="account-form">
+
+                <label for="loginUsername">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="loginUsername"
+                    name="username"
+                    autocomplete="username"
+                    minlength="3"
+                    maxlength="30"
+                    pattern="[A-Za-z0-9_]+"
+                    title="Use letters, numbers, and underscores only."
+                    required>
+
+                <label for="loginPassword">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    name="password"
+                    autocomplete="current-password"
+                    required>
+
+                <button
+                    type="submit"
+                    class="account-submit">
+                    LOG IN
+                </button>
+
+            </form>
+
+            <!-- REGISTRATION FORM -->
+
+            <form
+                id="registerForm"
+                class="account-form"
+                hidden>
+
+                <label for="registerUsername">
+                    Choose a username
+                </label>
+
+                <input
+                    type="text"
+                    id="registerUsername"
+                    name="username"
+                    autocomplete="username"
+                    minlength="3"
+                    maxlength="30"
+                    pattern="[A-Za-z0-9_]+"
+                    title="Use letters, numbers, and underscores only."
+                    required>
+
+                <label for="registerPassword">
+                    Create a password
+                </label>
+
+                <input
+                    type="password"
+                    id="registerPassword"
+                    name="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required>
+
+                <label for="confirmPassword">
+                    Confirm password
+                </label>
+
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required>
+
+                <button
+                    type="submit"
+                    class="account-submit">
+                    CREATE ACCOUNT
+                </button>
+
+            </form>
+
+            <p
+                id="accountMessage"
+                class="account-message"
+                role="status"
+                aria-live="polite">
             </p>
 
-            <div class="hero-buttons">
-
-                <a href="#workouts" class="main-button">
-                    START WORKOUT
-                </a>
-
-                <a href="#health" class="secondary-button">
-                    HEALTH GUIDE
-                </a>
-
-            </div>
-
-        </div>
-
-
-        <div class="hero-info">
-
-            <div class="hero-info-card">
-                <span>07</span>
-                <p>Workout Categories</p>
-            </div>
-
-            <div class="hero-info-card">
-                <span>19</span>
-                <p>Exercises</p>
-            </div>
-
-            <div class="hero-info-card">
-                <span>100%</span>
-                <p>Workout Assistance</p>
-            </div>
+            <p class="account-note">
+                Your account protects your personal profile and workout history.
+                Keep your password private.
+            </p>
 
         </div>
 
     </section>
 
 
+    <!-- =========================================
+         MAIN WEBSITE
+         Hidden until a valid session is detected.
+    ========================================== -->
 
-    <!-- =========================
-         WORKOUTS
-    ========================== -->
-    <section id="workouts" class="section">
+    <div id="mainWebsite" hidden>
 
-        <div class="section-title">
-
-            <p>
-                EXERCISE LIBRARY
-            </p>
-
-            <h2>
-                Choose Your Workout
-            </h2>
+        <div class="member-bar">
 
             <span>
-                Select a workout category to discover exercises and their
-                fitness benefits.
+                Logged in as <strong id="memberUsername"></strong>
             </span>
 
-        </div>
-
-
-        <!-- =========================
-             WORKOUT CATEGORY CARDS
-        ========================== -->
-
-        <div class="category-grid">
-
-
-            <!-- CHEST -->
-
-            <div class="category-card" onclick="filterWorkouts('Chest')">
-
-                <div class="category-image">
-
-                    <img
-                        src="chest.png"
-                        alt="Chest Workout"
-                    >
-
-                </div>
-
-                <div class="category-content">
-
-                    <span class="category-number">
-                        01
-                    </span>
-
-                    <h3>
-                        CHEST
-                    </h3>
-
-                    <p>
-                        Exercises designed to train the chest and
-                        upper-body muscles.
-                    </p>
-
-                    <span class="view-category">
-                        VIEW WORKOUTS →
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- BACK -->
-
-            <div class="category-card" onclick="filterWorkouts('Back')">
-
-                <div class="category-image">
-
-                    <img
-                        src="back.png"
-                        alt="Back Workout"
-                    >
-
-                </div>
-
-                <div class="category-content">
-
-                    <span class="category-number">
-                        02
-                    </span>
-
-                    <h3>
-                        BACK
-                    </h3>
-
-                    <p>
-                        Exercises that target the back and
-                        pulling muscles.
-                    </p>
-
-                    <span class="view-category">
-                        VIEW WORKOUTS →
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- LEGS -->
-
-            <div class="category-card" onclick="filterWorkouts('Legs')">
-
-                <div class="category-image">
-
-                    <img
-                        src="leg.png"
-                        alt="Leg Workout"
-                    >
-
-                </div>
-
-                <div class="category-content">
-
-                    <span class="category-number">
-                        03
-                    </span>
-
-                    <h3>
-                        LEGS
-                    </h3>
-
-                    <p>
-                        Exercises for lower-body strength,
-                        balance, and endurance.
-                    </p>
-
-                    <span class="view-category">
-                        VIEW WORKOUTS →
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- CARDIO -->
-
-            <div class="category-card" onclick="filterWorkouts('Cardio')">
-
-                <div class="category-image">
-
-                    <img
-                        src="cardio.png"
-                        alt="Cardio Workout"
-                    >
-
-                </div>
-
-                <div class="category-content">
-
-                    <span class="category-number">
-                        04
-                    </span>
-
-                    <h3>
-                        CARDIO
-                    </h3>
-
-                    <p>
-                        Activities that help improve cardiovascular
-                        fitness and endurance.
-                    </p>
-
-                    <span class="view-category">
-                        VIEW WORKOUTS →
-                    </span>
-
-                </div>
-
-            </div>
+            <button
+                type="button"
+                id="logoutButton"
+                class="logout-button">
+                LOG OUT
+            </button>
 
         </div>
 
 
+        <!-- NAVIGATION -->
 
-        <!-- =========================
-             FIND YOUR WORKOUT
-        ========================== -->
+        <nav class="navbar">
 
-        <div class="finder-section">
+            <div class="logo">
+                FRANZ<span>WORKOUT</span>
+            </div>
 
-            <div class="finder-header">
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#workouts">Workouts</a>
+                <a href="#health">Health Guide</a>
+                <a href="#about">About</a>
+            </div>
 
-                <p>
-                    PERSONALIZED WORKOUT FINDER
+        </nav>
+
+
+        <!-- HOME -->
+
+        <section id="home" class="hero">
+
+            <div class="hero-content">
+
+                <p class="small-title">
+                    WELCOME TO
                 </p>
 
-                <h2>
-                    Find an Exercise That Fits You
-                </h2>
+                <h1>
+                    FRANZ WORKOUT
+                    <br>
+                    <span>ASSISTANCE</span>
+                </h1>
+
+                <p class="hero-text">
+                    Your personal workout assistance system designed to help you
+                    choose exercises, understand their fitness benefits, and
+                    organize your workout routine.
+                </p>
+
+                <div class="hero-buttons">
+
+                    <a href="#workouts" class="main-button">
+                        START WORKOUT
+                    </a>
+
+                    <a href="#health" class="secondary-button">
+                        HEALTH GUIDE
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="hero-info">
+
+                <div class="hero-info-card">
+                    <span>07</span>
+                    <p>Workout Categories</p>
+                </div>
+
+                <div class="hero-info-card">
+                    <span>19</span>
+                    <p>Exercises</p>
+                </div>
+
+                <div class="hero-info-card">
+                    <span>100%</span>
+                    <p>Workout Assistance</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- WORKOUTS -->
+
+        <section id="workouts" class="section">
+
+            <div class="section-title">
+
+                <p>EXERCISE LIBRARY</p>
+
+                <h2>Choose Your Workout</h2>
 
                 <span>
-                    Choose a fitness goal and experience level to see
-                    suitable exercises from our library.
+                    Select a workout category to discover exercises and their
+                    fitness benefits.
                 </span>
 
             </div>
 
 
-            <div class="finder-form">
+            <!-- CATEGORY CARDS -->
 
+            <div class="category-grid">
 
-                <div class="finder-field">
+                <div
+                    class="category-card"
+                    onclick="filterWorkouts('Chest')">
 
-                    <label for="fitnessGoal">
-                        FITNESS GOAL
-                    </label>
+                    <div class="category-image">
+                        <img src="chest.png" alt="Chest Workout">
+                    </div>
 
-                    <select id="fitnessGoal">
+                    <div class="category-content">
+                        <span class="category-number">01</span>
+                        <h3>CHEST</h3>
 
-                        <option value="general">
-                            General Fitness
-                        </option>
+                        <p>
+                            Exercises designed to train the chest and
+                            upper-body muscles.
+                        </p>
 
-                        <option value="strength">
-                            Strength
-                        </option>
-
-                        <option value="cardio">
-                            Cardio & Endurance
-                        </option>
-
-                        <option value="upper">
-                            Upper Body
-                        </option>
-
-                        <option value="lower">
-                            Lower Body
-                        </option>
-
-                        <option value="core">
-                            Core
-                        </option>
-
-                        <option value="mobility">
-                            Movement & Mobility
-                        </option>
-
-                    </select>
+                        <span class="view-category">
+                            VIEW WORKOUTS →
+                        </span>
+                    </div>
 
                 </div>
 
 
+                <div
+                    class="category-card"
+                    onclick="filterWorkouts('Back')">
 
-                <div class="finder-field">
+                    <div class="category-image">
+                        <img src="back.png" alt="Back Workout">
+                    </div>
 
-                    <label for="fitnessLevel">
-                        EXPERIENCE LEVEL
-                    </label>
+                    <div class="category-content">
+                        <span class="category-number">02</span>
+                        <h3>BACK</h3>
 
-                    <select id="fitnessLevel">
+                        <p>
+                            Exercises that target the back and
+                            pulling muscles.
+                        </p>
 
-                        <option value="Beginner">
-                            Beginner
-                        </option>
-
-                        <option value="Intermediate">
-                            Intermediate
-                        </option>
-
-                    </select>
+                        <span class="view-category">
+                            VIEW WORKOUTS →
+                        </span>
+                    </div>
 
                 </div>
 
 
+                <div
+                    class="category-card"
+                    onclick="filterWorkouts('Legs')">
 
-                <button
-                    class="find-button"
-                    onclick="findRecommendedWorkouts()"
-                >
-                    FIND EXERCISES
-                </button>
+                    <div class="category-image">
+                        <img src="leg.png" alt="Leg Workout">
+                    </div>
 
-            </div>
+                    <div class="category-content">
+                        <span class="category-number">03</span>
+                        <h3>LEGS</h3>
 
+                        <p>
+                            Exercises for lower-body strength,
+                            balance, and endurance.
+                        </p>
 
-            <div
-                id="recommendationResults"
-                class="recommendation-results"
-            ></div>
+                        <span class="view-category">
+                            VIEW WORKOUTS →
+                        </span>
+                    </div>
 
-
-            <p class="finder-note">
-
-                This tool provides general fitness suggestions,
-                not medical advice. Choose activities that feel
-                appropriate for your current ability and stop if
-                you feel pain, dizziness, or unwell.
-
-            </p>
-
-        </div>
+                </div>
 
 
+                <div
+                    class="category-card"
+                    onclick="filterWorkouts('Cardio')">
 
-        <!-- =========================
-             QUICK FILTER
-        ========================== -->
+                    <div class="category-image">
+                        <img src="cardio.png" alt="Cardio Workout">
+                    </div>
 
-        <div class="quick-filter">
+                    <div class="category-content">
+                        <span class="category-number">04</span>
+                        <h3>CARDIO</h3>
 
-            <p>
-                QUICK FILTER
-            </p>
+                        <p>
+                            Activities that help improve cardiovascular
+                            fitness and endurance.
+                        </p>
 
+                        <span class="view-category">
+                            VIEW WORKOUTS →
+                        </span>
+                    </div>
 
-            <div class="categories">
-
-                <button onclick="filterWorkouts('All')">
-                    ALL
-                </button>
-
-                <button onclick="filterWorkouts('Chest')">
-                    CHEST
-                </button>
-
-                <button onclick="filterWorkouts('Back')">
-                    BACK
-                </button>
-
-                <button onclick="filterWorkouts('Shoulders')">
-                    SHOULDERS
-                </button>
-
-                <button onclick="filterWorkouts('Arms')">
-                    ARMS
-                </button>
-
-                <button onclick="filterWorkouts('Legs')">
-                    LEGS
-                </button>
-
-                <button onclick="filterWorkouts('Core')">
-                    CORE
-                </button>
-
-                <button onclick="filterWorkouts('Cardio')">
-                    CARDIO
-                </button>
+                </div>
 
             </div>
 
-        </div>
 
+            <!-- WORKOUT FINDER -->
 
+            <div class="finder-section">
 
-        <!-- =========================
-             WORKOUT RESULTS
-        ========================== -->
+                <div class="finder-header">
 
-        <div
-            id="workoutResults"
-            class="workout-results"
-        >
+                    <p>PERSONALIZED WORKOUT FINDER</p>
 
-            <div class="results-header">
+                    <h2>Find an Exercise That Fits You</h2>
 
-                <div>
-
-                    <p>
-                        WORKOUT LIBRARY
-                    </p>
-
-                    <h2 id="resultsTitle">
-                        All Exercises
-                    </h2>
-
-                    <span id="resultsDescription">
-                        Browse all available exercises.
+                    <span>
+                        Choose a fitness goal and experience level to see
+                        suitable exercises from our library.
                     </span>
 
                 </div>
 
-            </div>
+                <div class="finder-form">
 
+                    <div class="finder-field">
 
-            <div
-                id="workoutContainer"
-                class="workout-container"
-            ></div>
+                        <label for="fitnessGoal">
+                            FITNESS GOAL
+                        </label>
 
-        </div>
+                        <select id="fitnessGoal">
 
-    </section>
+                            <option value="general">General Fitness</option>
+                            <option value="strength">Strength</option>
+                            <option value="cardio">Cardio &amp; Endurance</option>
+                            <option value="upper">Upper Body</option>
+                            <option value="lower">Lower Body</option>
+                            <option value="core">Core</option>
+                            <option value="mobility">Movement &amp; Mobility</option>
 
+                        </select>
 
+                    </div>
 
-    <!-- =========================
-         HEALTH GUIDE
-    ========================== -->
+                    <div class="finder-field">
 
-    <section
-        id="health"
-        class="health-section"
-    >
+                        <label for="fitnessLevel">
+                            EXPERIENCE LEVEL
+                        </label>
 
-        <div class="section-title">
+                        <select id="fitnessLevel">
 
-            <p>
-                FITNESS INFORMATION
-            </p>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
 
-            <h2>
-                What Type of Workout Is Good for You?
-            </h2>
+                        </select>
 
-            <span>
-                Different types of physical activity provide
-                different fitness benefits.
-            </span>
+                    </div>
 
-        </div>
+                    <button
+                        class="find-button"
+                        type="button"
+                        onclick="findRecommendedWorkouts()">
+                        FIND EXERCISES
+                    </button>
 
-
-
-        <div class="health-grid">
-
-
-            <!-- STRENGTH -->
-
-            <div class="health-card">
-
-                <div class="health-icon">
-                    💪
                 </div>
 
-                <h3>
-                    Strength Training
-                </h3>
-
-                <p>
-                    Resistance exercises can help improve muscular
-                    strength and support everyday physical activities.
-                </p>
-
-                <strong>
-                    Examples
-                </strong>
-
-                <p>
-                    Squats, push-ups, rows, presses
-                </p>
-
-            </div>
-
-
-
-            <!-- CARDIO -->
-
-            <div class="health-card">
-
-                <div class="health-icon">
-                    ❤️
+                <div
+                    id="recommendationResults"
+                    class="recommendation-results">
                 </div>
 
-                <h3>
-                    Cardiovascular Exercise
-                </h3>
-
-                <p>
-                    Cardio activities can help improve cardiovascular
-                    fitness and endurance.
-                </p>
-
-                <strong>
-                    Examples
-                </strong>
-
-                <p>
-                    Walking, jogging, cycling, swimming
+                <p class="finder-note">
+                    This tool provides general fitness suggestions, not medical
+                    advice. Choose activities appropriate for your ability and
+                    stop if you feel pain, dizziness, or unwell.
                 </p>
 
             </div>
 
 
+            <!-- QUICK FILTER -->
 
-            <!-- MOBILITY -->
+            <div class="quick-filter">
 
-            <div class="health-card">
+                <p>QUICK FILTER</p>
 
-                <div class="health-icon">
-                    🧘
+                <div class="categories">
+
+                    <button onclick="filterWorkouts('All')">ALL</button>
+                    <button onclick="filterWorkouts('Chest')">CHEST</button>
+                    <button onclick="filterWorkouts('Back')">BACK</button>
+                    <button onclick="filterWorkouts('Shoulders')">SHOULDERS</button>
+                    <button onclick="filterWorkouts('Arms')">ARMS</button>
+                    <button onclick="filterWorkouts('Legs')">LEGS</button>
+                    <button onclick="filterWorkouts('Core')">CORE</button>
+                    <button onclick="filterWorkouts('Cardio')">CARDIO</button>
+
                 </div>
 
-                <h3>
-                    Flexibility & Mobility
-                </h3>
-
-                <p>
-                    Mobility and flexibility activities can help maintain
-                    comfortable movement and range of motion.
-                </p>
-
-                <strong>
-                    Examples
-                </strong>
-
-                <p>
-                    Stretching, mobility drills, yoga
-                </p>
-
             </div>
 
 
+            <!-- WORKOUT RESULTS -->
 
-            <!-- FULL BODY -->
+            <div id="workoutResults" class="workout-results">
 
-            <div class="health-card">
+                <div class="results-header">
 
-                <div class="health-icon">
-                    🔥
+                    <div>
+
+                        <p>WORKOUT LIBRARY</p>
+
+                        <h2 id="resultsTitle">
+                            All Exercises
+                        </h2>
+
+                        <span id="resultsDescription">
+                            Browse all available exercises.
+                        </span>
+
+                    </div>
+
                 </div>
 
-                <h3>
-                    Full Body Fitness
-                </h3>
+                <div
+                    id="workoutContainer"
+                    class="workout-container">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- HEALTH GUIDE -->
+
+        <section id="health" class="health-section">
+
+            <div class="section-title">
+
+                <p>FITNESS INFORMATION</p>
+
+                <h2>What Type of Workout Is Good for You?</h2>
+
+                <span>
+                    Different types of physical activity provide
+                    different fitness benefits.
+                </span>
+
+            </div>
+
+
+            <div class="health-grid">
+
+                <div class="health-card">
+
+                    <div class="health-icon">💪</div>
+
+                    <h3>Strength Training</h3>
+
+                    <p>
+                        Resistance exercises can help improve muscular
+                        strength and support everyday physical activities.
+                    </p>
+
+                    <strong>Examples</strong>
+
+                    <p>Squats, push-ups, rows, presses</p>
+
+                </div>
+
+
+                <div class="health-card">
+
+                    <div class="health-icon">❤️</div>
+
+                    <h3>Cardiovascular Exercise</h3>
+
+                    <p>
+                        Cardio activities can help improve cardiovascular
+                        fitness and endurance.
+                    </p>
+
+                    <strong>Examples</strong>
+
+                    <p>Walking, jogging, cycling, swimming</p>
+
+                </div>
+
+
+                <div class="health-card">
+
+                    <div class="health-icon">🧘</div>
+
+                    <h3>Flexibility &amp; Mobility</h3>
+
+                    <p>
+                        Mobility and flexibility activities can help maintain
+                        comfortable movement and range of motion.
+                    </p>
+
+                    <strong>Examples</strong>
+
+                    <p>Stretching, mobility drills, yoga</p>
+
+                </div>
+
+
+                <div class="health-card">
+
+                    <div class="health-icon">🔥</div>
+
+                    <h3>Full Body Fitness</h3>
+
+                    <p>
+                        Combining strength, cardio, and mobility can provide
+                        a balanced approach to fitness.
+                    </p>
+
+                    <strong>Examples</strong>
+
+                    <p>Circuit training, walking, bodyweight exercises</p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ABOUT -->
+
+        <section id="about" class="about-section">
+
+            <div class="about-content">
+
+                <p class="small-title">ABOUT THE SYSTEM</p>
+
+                <h2>FRANZ WORKOUT ASSISTANCE</h2>
 
                 <p>
-                    Combining strength, cardio, and mobility can provide
-                    a balanced approach to fitness.
+                    FRANZ WORKOUT ASSISTANCE is a workout assistance system
+                    designed to help users explore exercises, understand their
+                    fitness benefits, and organize their workout routines.
                 </p>
 
-                <strong>
-                    Examples
-                </strong>
-
-                <p>
-                    Circuit training, walking, bodyweight exercises
+                <p class="warning">
+                    Fitness information provided by this website is for
+                    general educational purposes and is not a substitute
+                    for advice from a qualified healthcare or fitness
+                    professional.
                 </p>
 
             </div>
 
-        </div>
-
-    </section>
+        </section>
 
 
+        <!-- FOOTER -->
 
-    <!-- =========================
-         ABOUT
-    ========================== -->
+        <footer>
 
-    <section
-        id="about"
-        class="about-section"
-    >
+            <div class="footer-logo">
+                FRANZ<span>WORKOUT</span>
+            </div>
 
-        <div class="about-content">
+            <p>FRANZ WORKOUT ASSISTANCE</p>
 
-            <p class="small-title">
-                ABOUT THE SYSTEM
+            <p class="copyright">
+                © 2026 FRANZ WORKOUT ASSISTANCE
             </p>
 
-            <h2>
-                FRANZ WORKOUT ASSISTANCE
-            </h2>
+        </footer>
 
-            <p>
-                FRANZ WORKOUT ASSISTANCE is a workout assistance
-                system designed to help users explore exercises,
-                understand their fitness benefits, and organize
-                their workout routines.
-            </p>
-
-            <p class="warning">
-                Fitness information provided by this website is for
-                general educational purposes and is not a substitute
-                for advice from a qualified healthcare or fitness
-                professional.
-            </p>
-
-        </div>
-
-    </section>
+    </div>
 
 
+    <!-- =========================================
+         JAVASCRIPT FILES
+         Load each file exactly once.
+    ========================================== -->
 
-    <!-- =========================
-         FOOTER
-    ========================== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <footer>
+    <script src="supabase-config.js"></script>
 
-        <div class="footer-logo">
-            FRANZ<span>WORKOUT</span>
-        </div>
+    <script src="workouts.js"></script>
 
-        <p>
-            FRANZ WORKOUT ASSISTANCE
-        </p>
-
-        <p class="copyright">
-            © 2026 FRANZ WORKOUT ASSISTANCE
-        </p>
-
-    </footer>
+    <script src="script.js"></script>
 
 
+    <!-- =========================================
+         ACCOUNT AUTHENTICATION
+    ========================================== -->
 
-    <!-- =========================
-         JAVASCRIPT
-         
-         IMPORTANT:
-         All files are in the SAME
-         GitHub repository root.
-    ========================== -->
-<!-- Supabase JavaScript library -->
+    <script>
+        (() => {
+            "use strict";
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            const accountSection = document.getElementById("accountSection");
+            const mainWebsite = document.getElementById("mainWebsite");
 
-<!-- Supabase project configuration -->
+            const loginForm = document.getElementById("loginForm");
+            const registerForm = document.getElementById("registerForm");
 
-<script src="supabase-config.js"></script>
+            const showLoginBtn = document.getElementById("showLoginBtn");
+            const showRegisterBtn = document.getElementById("showRegisterBtn");
 
-<!-- Workout data -->
+            const accountHeading = document.getElementById("accountHeading");
+            const accountDescription = document.getElementById("accountDescription");
+            const accountMessage = document.getElementById("accountMessage");
 
-<script src="workouts.js"></script>
+            const memberUsername = document.getElementById("memberUsername");
+            const logoutButton = document.getElementById("logoutButton");
 
-<!-- Main website JavaScript -->
+            let busy = false;
 
-<script src="script.js"></script>
+            /*
+             * Usernames are converted into an internal email-shaped identifier.
+             * This prototype does not use these identifiers for email delivery.
+             */
+            function usernameToEmail(username) {
+                return username.trim().toLowerCase() + "@users.franzworkout.invalid";
+            }
+
+            function setMessage(message, isError = true) {
+                accountMessage.textContent = message;
+                accountMessage.style.color = isError ? "#ffb199" : "#9ee6a0";
+            }
+
+            function setBusy(value) {
+                busy = value;
+
+                document.querySelectorAll(".account-submit").forEach(button => {
+                    button.disabled = value;
+                    button.textContent = value
+                        ? "PLEASE WAIT..."
+                        : button.closest("#loginForm")
+                            ? "LOG IN"
+                            : "CREATE ACCOUNT";
+                });
+            }
+
+            function showLogin() {
+                loginForm.hidden = false;
+                registerForm.hidden = true;
+
+                showLoginBtn.classList.add("active");
+                showRegisterBtn.classList.remove("active");
+
+                accountHeading.textContent = "Welcome Back";
+                accountDescription.textContent =
+                    "Log in to access your workouts, recommendations, and fitness tools.";
+
+                setMessage("", false);
+            }
+
+            function showRegister() {
+                loginForm.hidden = true;
+                registerForm.hidden = false;
+
+                showLoginBtn.classList.remove("active");
+                showRegisterBtn.classList.add("active");
+
+                accountHeading.textContent = "Create Your Account";
+                accountDescription.textContent =
+                    "Register to access your personal workout website.";
+
+                setMessage("", false);
+            }
+
+            function showAccount() {
+                mainWebsite.hidden = true;
+                accountSection.hidden = false;
+                document.body.classList.remove("modal-open");
+                window.scrollTo(0, 0);
+            }
+
+            async function showWebsite(user) {
+                let username = "Member";
+
+                try {
+                    const { data, error } = await supabaseClient
+                        .from("profiles")
+                        .select("username")
+                        .eq("id", user.id)
+                        .maybeSingle();
+
+                    if (!error && data?.username) {
+                        username = data.username;
+                    } else {
+                        /*
+                         * This fallback only derives the display name.
+                         * Database permissions still protect profile data.
+                         */
+                        const internalEmail = user.email || "";
+                        username = internalEmail.split("@")[0] || "Member";
+                    }
+                } catch (error) {
+                    console.error("Could not load profile:", error);
+                }
+
+                memberUsername.textContent = username;
+
+                accountSection.hidden = true;
+                mainWebsite.hidden = false;
+
+                window.scrollTo(0, 0);
+            }
+
+            showLoginBtn.addEventListener("click", showLogin);
+            showRegisterBtn.addEventListener("click", showRegister);
+
+
+            // REGISTER
+
+            registerForm.addEventListener("submit", async event => {
+                event.preventDefault();
+
+                if (busy) return;
+
+                const username = document
+                    .getElementById("registerUsername")
+                    .value.trim()
+                    .toLowerCase();
+
+                const password = document
+                    .getElementById("registerPassword")
+                    .value;
+
+                const confirmPassword = document
+                    .getElementById("confirmPassword")
+                    .value;
+
+                if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+                    setMessage(
+                        "Use 3 to 30 characters. Only letters, numbers, and underscores are allowed."
+                    );
+                    return;
+                }
+
+                if (password.length < 8) {
+                    setMessage("Your password must contain at least 8 characters.");
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    setMessage("The passwords do not match.");
+                    return;
+                }
+
+                setBusy(true);
+                setMessage("Creating your account...", false);
+
+                try {
+                    const internalEmail = usernameToEmail(username);
+
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email: internalEmail,
+                        password: password
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    if (!data.user) {
+                        throw new Error("Supabase did not return a user account.");
+                    }
+
+                    /*
+                     * Create the user's profile. The RLS policy must restrict
+                     * inserts to the authenticated user's own UUID.
+                     */
+                    if (data.session) {
+                        const { error: profileError } = await supabaseClient
+                            .from("profiles")
+                            .insert({
+                                id: data.user.id,
+                                username: username
+                            });
+
+                        if (profileError) {
+                            /*
+                             * A profile insert failure must be reported.
+                             * Do not pretend registration completed fully.
+                             */
+                            console.error("Profile creation failed:", profileError);
+
+                            throw new Error(
+                                "Your account was created, but your profile could not be saved. Please contact the site administrator before trying to register again."
+                            );
+                        }
+
+                        registerForm.reset();
+
+                        setMessage("Account created successfully. Opening your website...", false);
+
+                        await showWebsite(data.user);
+                    } else {
+                        /*
+                         * A username-based internal identifier cannot receive
+                         * an email confirmation. Confirmation must be disabled.
+                         */
+                        setMessage(
+                            "Supabase did not start a session. Check that email confirmation is disabled in your Supabase Auth settings."
+                        );
+                    }
+
+                } catch (error) {
+                    console.error("Registration error:", error);
+
+                    setMessage(
+                        error.message || "Registration failed. Please try again."
+                    );
+
+                } finally {
+                    setBusy(false);
+                }
+            });
+
+
+            // LOGIN
+
+            loginForm.addEventListener("submit", async event => {
+                event.preventDefault();
+
+                if (busy) return;
+
+                const username = document
+                    .getElementById("loginUsername")
+                    .value.trim()
+                    .toLowerCase();
+
+                const password = document
+                    .getElementById("loginPassword")
+                    .value;
+
+                if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+                    setMessage("Enter a valid username.");
+                    return;
+                }
+
+                setBusy(true);
+                setMessage("Signing in...", false);
+
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: usernameToEmail(username),
+                        password: password
+                    });
+
+                    if (error) {
+                        throw new Error("Invalid username or password.");
+                    }
+
+                    if (!data.user) {
+                        throw new Error("Login failed. Please try again.");
+                    }
+
+                    loginForm.reset();
+
+                    await showWebsite(data.user);
+
+                } catch (error) {
+                    console.error("Login error:", error);
+
+                    setMessage(
+                        error.message || "Login failed. Please try again."
+                    );
+
+                } finally {
+                    setBusy(false);
+                }
+            });
+
+
+            // LOGOUT
+
+            logoutButton.addEventListener("click", async () => {
+                if (busy) return;
+
+                logoutButton.disabled = true;
+
+                try {
+                    const { error } = await supabaseClient.auth.signOut();
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    showAccount();
+                    showLogin();
+                    loginForm.reset();
+
+                } catch (error) {
+                    console.error("Logout error:", error);
+
+                    alert("Unable to log out. Please try again.");
+
+                } finally {
+                    logoutButton.disabled = false;
+                }
+            });
+
+
+            // INITIAL SESSION CHECK
+
+            async function initializeAuthentication() {
+                showAccount();
+                showLogin();
+
+                try {
+                    const { data, error } =
+                        await supabaseClient.auth.getSession();
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    if (data.session?.user) {
+                        await showWebsite(data.session.user);
+                    }
+
+                } catch (error) {
+                    console.error("Session check failed:", error);
+
+                    setMessage(
+                        "Unable to connect to the authentication service. Please refresh the page."
+                    );
+                }
+            }
+
+            /*
+             * Respond to authentication changes, including expired sessions.
+             */
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === "SIGNED_OUT") {
+                    showAccount();
+                    showLogin();
+                }
+            });
+
+            initializeAuthentication();
+
+        })();
+    </script>
 
 </body>
-
-
-    ```
-<!-- ACCOUNT ACCESS -->
-<section id="accountSection" class="account-section">
-    <div class="account-card">
-        <p class="small-title">MEMBER ACCESS</p>
-        <h2>YOUR FITNESS ACCOUNT</h2>
-        <p>Sign in or create an account to save your profile and workout history.</p>
-
-        <div class="account-tabs">
-            <button type="button" id="showLoginBtn" class="account-tab active">
-                LOG IN
-            </button>
-            <button type="button" id="showRegisterBtn" class="account-tab">
-                REGISTER
-            </button>
-        </div>
-
-        <form id="loginForm">
-            <label for="loginUsername">Username</label>
-            <input
-                type="text"
-                id="loginUsername"
-                autocomplete="username"
-                minlength="3"
-                maxlength="30"
-                required
-            >
-
-            <label for="loginPassword">Password</label>
-            <input
-                type="password"
-                id="loginPassword"
-                autocomplete="current-password"
-                required
-            >
-
-            <button type="submit" class="main-button account-submit">
-                LOG IN
-            </button>
-        </form>
-
-        <form id="registerForm" hidden>
-            <label for="registerUsername">Choose a username</label>
-            <input
-                type="text"
-                id="registerUsername"
-                autocomplete="username"
-                minlength="3"
-                maxlength="30"
-                pattern="[A-Za-z0-9_]+"
-                title="Use letters, numbers, and underscores only."
-                required
-            >
-
-            <label for="registerPassword">Create a password</label>
-            <input
-                type="password"
-                id="registerPassword"
-                autocomplete="new-password"
-                minlength="8"
-                required
-            >
-
-            <label for="confirmPassword">Confirm password</label>
-            <input
-                type="password"
-                id="confirmPassword"
-                autocomplete="new-password"
-                minlength="8"
-                required
-            >
-
-            <button type="submit" class="main-button account-submit">
-                CREATE ACCOUNT
-            </button>
-        </form>
-
-        <p id="accountMessage" role="status" aria-live="polite"></p>
-    </div>
-</section>
-```
-
 </html>
-
