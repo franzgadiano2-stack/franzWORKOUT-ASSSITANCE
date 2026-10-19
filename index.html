@@ -781,7 +781,129 @@
     </div>
 
 </section>
+<!-- ADMIN DASHBOARD -->
+<section id="admin" class="admin-section" hidden>
 
+    <div class="section-title">
+        <p>DEVELOPER CONTROL PANEL</p>
+        <h2>Admin Dashboard</h2>
+        <span>Monitor registered users, workout activity, and fitness goals.</span>
+    </div>
+
+    <!-- DASHBOARD STATISTICS -->
+    <div class="admin-stats">
+
+        <div class="admin-stat-card">
+            <p>Registered Users</p>
+            <h3 id="adminUserCount">0</h3>
+        </div>
+
+        <div class="admin-stat-card">
+            <p>Workout Records</p>
+            <h3 id="adminWorkoutCount">0</h3>
+        </div>
+
+        <div class="admin-stat-card">
+            <p>Fitness Goals</p>
+            <h3 id="adminGoalCount">0</h3>
+        </div>
+
+    </div>
+
+    <!-- USER MANAGEMENT -->
+    <div class="admin-card">
+
+        <h3>Registered Users</h3>
+        <p>View users who have created a profile.</p>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Age</th>
+                        <th>Height (cm)</th>
+                        <th>Weight (kg)</th>
+                        <th>Fitness Goal</th>
+                    </tr>
+                </thead>
+
+                <tbody id="adminUsersTable">
+                    <tr>
+                        <td colspan="5">Dashboard data will load here.</td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+    <!-- WORKOUT HISTORY -->
+    <div class="admin-card">
+
+        <h3>Workout History</h3>
+        <p>Review workout records saved by users.</p>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Workout</th>
+                        <th>Date Completed</th>
+                    </tr>
+                </thead>
+
+                <tbody id="adminHistoryTable">
+                    <tr>
+                        <td colspan="3">Workout records will load here.</td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+    <!-- FITNESS GOALS -->
+    <div class="admin-card">
+
+        <h3>User Fitness Goals</h3>
+        <p>Review the fitness goals saved by users.</p>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Fitness Goal</th>
+                        <th>Date Created</th>
+                    </tr>
+                </thead>
+
+                <tbody id="adminGoalsTable">
+                    <tr>
+                        <td colspan="3">Fitness goals will load here.</td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+    <!-- STATUS MESSAGE -->
+    <p id="adminMessage" role="status" aria-live="polite"></p>
+
+    <button type="button" id="refreshAdminBtn" class="profile-save-btn">
+        Refresh Dashboard
+    </button>
+
+</section>
         <!-- HEALTH GUIDE -->
 
         <section id="health" class="health-section">
