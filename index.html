@@ -1618,5 +1618,281 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const adminLink = document.getElementById("adminNavLink");
+    const adminSection = document.getElementById("admin");
+    const adminMessage = document.getElementById("adminMessage");
+    const refreshButton = document.getElementById("refreshAdminBtn");
+
+    const usersTable = document.getElementById("adminUsersTable");
+    const historyTable = document.getElementById("adminHistoryTable");
+    const goalsTable = document.getElementById("adminGoalsTable");
+
+    const userCount = document.getElementById("adminUserCount");
+    const workoutCount = document.getElementById("adminWorkoutCount");
+    const goalCount = document.getElementById("adminGoalCount");
+
+    let isAdmin = false;
+
+    if (
+        typeof supabaseClient === "undefined" ||
+        !adminLink ||
+        !adminSection
+    ) {
+        console.error("Admin dashboard setup is incomplete.");
+        return;
+    }
+
+    // Safely display text from the database.
+    function addCell(row, value) {
+        const cell = document.createElement("td");
+        cell.textContent =
+            value === null || value === undefined || value === ""
+                ? "Not provided"
+                : String(value);
+
+        row.appendChild(cell);
+    }
+
+    function showTableMessage(table, columns, message) {
+        table.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = columns;
+        cell.textContent = message;
+
+        row.appendChild(cell);
+        table.appendChild(row);
+    }
+
+    function showError(message) {
+        adminMessage.textContent = message;
+    }
+
+    // Verify the current account using Supabase.
+    async function checkAdminAccess() {
+        adminLink.hidden = true;
+        adminSection.hidden = true;
+        isAdmin = false;
+
+        const { data, error } = await supabaseClient.auth.getUser();
+
+        if (error || !data.user) {
+            return;
+        }
+
+        const { data: adminRecord, error: adminError } =
+            await supabaseClient
+                .from("admin_users")
+                .select("user_id")
+                .eq("user_id", data.user.id)
+                .maybeSingle();
+
+        if (adminError) {
+            console.error("Admin verification failed:", adminError);
+            return;
+        }
+
+        isAdmin = Boolean(adminRecord);
+
+        if (isAdmin) {
+            adminLink.hidden = false;
+        }
+    }
+
+    // Load dashboard information from Supabase.
+    async function loadAdminDashboard() {
+        if (!isAdmin) {
+            adminSection.hidden = true;
+            showError("Access denied. Administrator permission is required.");
+            return;
+        }
+
+        adminMessage.textContent = "Loading dashboard data...";
+
+        showTableMessage(usersTable, 5, "Loading users...");
+        showTableMessage(historyTable, 3, "Loading workout history...");
+        showTableMessage(goalsTable, 3, "Loading fitness goals...");
+
+        try {
+            const [
+                profilesResult,
+                historyResult,
+                goalsResult,
+                profilesCountResult,
+                historyCountResult,
+                goalsCountResult
+            ] = await Promise.all([
+                supabaseClient
+                    .from("profiles")
+                    .select("username, age, height_cm, weight_kg, fitness_goal")
+                    .order("username"),
+
+                supabaseClient
+                    .from("user_workout_history")
+                    .select("user_id, workout_id, completed_at, workouts(name)")
+                    .order("completed_at", { ascending: false }),
+
+                supabaseClient
+                    .from("user_goals")
+                    .select("user_id, goal, created_at")
+                    .order("created_at", { ascending: false }),
+
+                supabaseClient
+                    .from("profiles")
+                    .select("*", { count: "exact", head: true }),
+
+                supabaseClient
+                    .from("user_workout_history")
+                    .select("*", { count: "exact", head: true }),
+
+                supabaseClient
+                    .from("user_goals")
+                    .select("*", { count: "exact", head: true })
+            ]);
+
+            const results = [
+                profilesResult,
+                historyResult,
+                goalsResult,
+                profilesCountResult,
+                historyCountResult,
+                goalsCountResult
+            ];
+
+            const failedResult = results.find(result => result.error);
+
+            if (failedResult) {
+                console.error("Dashboard query failed:", failedResult.error);
+                showError(
+                    "Some dashboard data could not be loaded. " +
+                    "Check the browser console and Supabase permissions."
+                );
+                return;
+            }
+
+            // Dashboard statistics.
+            userCount.textContent = profilesCountResult.count ?? 0;
+            workoutCount.textContent = historyCountResult.count ?? 0;
+            goalCount.textContent = goalsCountResult.count ?? 0;
+
+            // Registered users.
+            usersTable.replaceChildren();
+
+            if (profilesResult.data.length === 0) {
+                showTableMessage(usersTable, 5, "No registered profiles found.");
+            } else {
+                profilesResult.data.forEach(profile => {
+                    const row = document.createElement("tr");
+
+                    addCell(row, profile.username);
+                    addCell(row, profile.age);
+                    addCell(row, profile.height_cm);
+                    addCell(row, profile.weight_kg);
+                    addCell(row, profile.fitness_goal);
+
+                    usersTable.appendChild(row);
+                });
+            }
+
+            // Workout history.
+            historyTable.replaceChildren();
+
+            if (historyResult.data.length === 0) {
+                showTableMessage(historyTable, 3, "No completed workouts recorded yet.");
+            } else {
+                historyResult.data.forEach(item => {
+                    const row = document.createElement("tr");
+
+                    addCell(row, item.user_id);
+                    addCell(row, item.workouts?.name || "Workout #" + (item.workout_id ?? "unknown"));
+
+                    const completedDate = item.completed_at
+                        ? new Date(item.completed_at).toLocaleString()
+                        : "Unknown";
+
+                    addCell(row, completedDate);
+
+                    historyTable.appendChild(row);
+                });
+            }
+
+            // User fitness goals.
+            goalsTable.replaceChildren();
+
+            if (goalsResult.data.length === 0) {
+                showTableMessage(goalsTable, 3, "No saved fitness goals found.");
+            } else {
+                goalsResult.data.forEach(item => {
+                    const row = document.createElement("tr");
+
+                    addCell(row, item.user_id);
+                    addCell(row, item.goal);
+
+                    const createdDate = item.created_at
+                        ? new Date(item.created_at).toLocaleString()
+                        : "Unknown";
+
+                    addCell(row, createdDate);
+
+                    goalsTable.appendChild(row);
+                });
+            }
+
+            adminMessage.textContent = "Dashboard data loaded successfully.";
+
+        } catch (error) {
+            console.error("Admin dashboard error:", error);
+            showError("An unexpected error occurred while loading the dashboard.");
+        }
+    }
+
+    // Handle dashboard navigation.
+    adminLink.addEventListener("click", async function (event) {
+        event.preventDefault();
+
+        await checkAdminAccess();
+
+        if (!isAdmin) {
+            adminSection.hidden = true;
+            showError("Access denied. This account is not an administrator.");
+            return;
+        }
+
+        adminSection.hidden = false;
+        adminSection.scrollIntoView({ behavior: "smooth" });
+
+        await loadAdminDashboard();
+    });
+
+    // Hide the dashboard when navigating to another section.
+    document.querySelectorAll(".nav-links a").forEach(link => {
+        if (link.id === "adminNavLink") {
+            return;
+        }
+
+        link.addEventListener("click", function () {
+            adminSection.hidden = true;
+        });
+    });
+
+    // Refresh dashboard data.
+    if (refreshButton) {
+        refreshButton.addEventListener("click", loadAdminDashboard);
+    }
+
+    // Update admin access after login or logout.
+    supabaseClient.auth.onAuthStateChange(function () {
+        setTimeout(checkAdminAccess, 0);
+    });
+
+    // Check the current session when the page opens.
+    checkAdminAccess();
+});
+</script>
 </body>
 </html>
