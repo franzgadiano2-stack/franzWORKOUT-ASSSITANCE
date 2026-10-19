@@ -1499,3 +1499,14 @@ color: #ff3c00;
 animation: none;
 }
 }
+
+
+/* Ensure hidden app sections stay hidden. */
+#home[hidden],
+#workouts[hidden],
+#profile[hidden],
+#health[hidden],
+#about[hidden],
+#admin[hidden] {
+    display: none !important;
+}
