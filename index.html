@@ -683,6 +683,64 @@
 
         </section>
 
+<!-- MY PROFILE -->
+
+<section id="profile" class="profile-section" hidden>
+    <div class="section-title">
+        <p>YOUR ACCOUNT</p>
+        <h2>My Profile</h2>
+        <span>Manage your personal information and fitness goals.</span>
+    </div>
+
+```
+<div class="profile-card">
+    <form id="profileForm">
+        <div class="profile-field">
+            <label for="profileUsername">Username</label>
+            <input type="text" id="profileUsername" readonly>
+            <small>Your registered username cannot be changed here.</small>
+        </div>
+
+        <div class="profile-field">
+            <label for="profileAge">Age</label>
+            <input type="number" id="profileAge" min="13" max="120"
+                   placeholder="Enter your age" required>
+        </div>
+
+        <div class="profile-field">
+            <label for="profileHeight">Height (cm)</label>
+            <input type="number" id="profileHeight" min="1" max="299"
+                   step="0.1" placeholder="e.g. 175" required>
+        </div>
+
+        <div class="profile-field">
+            <label for="profileWeight">Weight (kg)</label>
+            <input type="number" id="profileWeight" min="1" max="699"
+                   step="0.1" placeholder="e.g. 70" required>
+        </div>
+
+        <div class="profile-field">
+            <label for="profileGoal">Fitness Goal</label>
+            <select id="profileGoal" required>
+                <option value="">Choose your fitness goal</option>
+                <option value="General Fitness">General Fitness</option>
+                <option value="Build Strength">Build Strength</option>
+                <option value="Improve Endurance">Improve Endurance</option>
+                <option value="Improve Flexibility">Improve Flexibility</option>
+                <option value="Stay Active">Stay Active</option>
+            </select>
+        </div>
+
+        <button type="submit" class="profile-save-btn">
+            Save Profile
+        </button>
+
+        <p id="profileMessage" role="status" aria-live="polite"></p>
+    </form>
+</div>
+```
+
+</section>
 
         <!-- HEALTH GUIDE -->
 
