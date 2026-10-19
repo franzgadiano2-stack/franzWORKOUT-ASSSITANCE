@@ -1424,5 +1424,73 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const calculateBmiBtn = document.getElementById("calculateBmiBtn");
+    const bmiValue = document.getElementById("bmiValue");
+    const bmiStatus = document.getElementById("bmiStatus");
+    const bmiMessage = document.getElementById("bmiMessage");
+
+    if (!calculateBmiBtn) {
+        console.error("BMI button was not found.");
+        return;
+    }
+
+    calculateBmiBtn.addEventListener("click", function () {
+        const height = parseFloat(
+            document.getElementById("profileHeight").value
+        );
+
+        const weight = parseFloat(
+            document.getElementById("profileWeight").value
+        );
+
+        const age = parseInt(
+            document.getElementById("profileAge").value,
+            10
+        );
+
+        if (
+            !Number.isFinite(height) ||
+            !Number.isFinite(weight) ||
+            height <= 0 ||
+            weight <= 0
+        ) {
+            bmiValue.textContent = "--";
+            bmiStatus.textContent = "Height and weight are required.";
+            bmiMessage.textContent =
+                "Please enter your height and weight in My Profile first.";
+            return;
+        }
+
+        const heightInMeters = height / 100;
+        const bmi = weight / (heightInMeters * heightInMeters);
+
+        bmiValue.textContent = bmi.toFixed(1);
+        bmiMessage.textContent = "";
+
+        if (!Number.isFinite(age) || age < 13) {
+            bmiStatus.textContent = "Check your age in My Profile.";
+        } else if (age < 18) {
+            bmiStatus.textContent = "BMI calculated. Teen interpretation requires an age- and sex-specific growth chart.";
+        } else {
+            let category = "";
+
+            if (bmi < 18.5) {
+                category = "Below the adult reference range";
+            } else if (bmi < 25) {
+                category = "Within the adult reference range";
+            } else if (bmi < 30) {
+                category = "Above the adult reference range";
+            } else {
+                category = "Higher adult BMI range";
+            }
+
+            bmiStatus.textContent = category;
+        }
+    });
+});
+</script>
 </body>
 </html>
