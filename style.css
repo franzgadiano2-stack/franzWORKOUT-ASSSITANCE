@@ -1465,3 +1465,37 @@ footer {
         font-size: 19px;
     }
 }
+
+
+/* APP-STYLE NAVIGATION */
+
+html {
+scroll-behavior: auto;
+}
+
+.app-section-transition {
+animation: appSectionFade 0.18s ease-out;
+}
+
+@keyframes appSectionFade {
+from {
+opacity: 0.65;
+}
+to {
+opacity: 1;
+}
+}
+
+.nav-links a {
+transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-links a.active {
+color: #ff3c00;
+}
+
+@media (prefers-reduced-motion: reduce) {
+.app-section-transition {
+animation: none;
+}
+}
