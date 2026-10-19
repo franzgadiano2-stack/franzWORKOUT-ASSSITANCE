@@ -736,9 +736,45 @@
         </button>
 
         <p id="profileMessage" role="status" aria-live="polite"></p>
-    </form>
-</div>
-```
+           </form>
+    </div>
+
+    <!-- BMI CALCULATOR -->
+    <div class="profile-card bmi-card">
+
+        <div class="section-title">
+            <p>HEALTH TRACKER</p>
+            <h2>BMI Calculator</h2>
+            <span>Calculate your Body Mass Index using your saved height and weight.</span>
+        </div>
+
+        <div class="bmi-content">
+
+            <div class="bmi-result">
+                <p>Your BMI</p>
+                <h3 id="bmiValue">--</h3>
+                <span id="bmiStatus">Save your height and weight first.</span>
+            </div>
+
+            <button type="button" id="calculateBmiBtn" class="profile-save-btn">
+                Calculate BMI
+            </button>
+
+            <p id="bmiMessage" role="status" aria-live="polite"></p>
+
+            <div class="bmi-note">
+                <strong>Important health information</strong>
+                <p>
+                    BMI is a screening measurement, not a diagnosis.
+                    For people under 18, BMI interpretation depends on age
+                    and sex and should use an appropriate growth chart.
+                    For adults, BMI is only one part of understanding health.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
 
 </section>
 
