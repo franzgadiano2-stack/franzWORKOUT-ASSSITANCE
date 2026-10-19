@@ -1833,24 +1833,19 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Handle dashboard navigation.
-    adminLink.addEventListener("click", async function (event) {
-        event.preventDefault();
+    // Handle dashboard navigation without scrolling.
+window.openFranzAdminDashboard = async function () {
+    await checkAdminAccess();
 
-        await checkAdminAccess();
+    if (!isAdmin) {
+        adminSection.hidden = true;
+        showError("Access denied. This account is not an administrator.");
+        return false;
+    }
 
-        if (!isAdmin) {
-            adminSection.hidden = true;
-            showError("Access denied. This account is not an administrator.");
-            return;
-        }
-
-        adminSection.hidden = false;
-        adminSection.scrollIntoView({ behavior: "smooth" });
-
-        await loadAdminDashboard();
-    });
-
+    await loadAdminDashboard();
+    return true;
+};
     // Hide the dashboard when navigating to another section.
     document.querySelectorAll(".nav-links a").forEach(link => {
         if (link.id === "adminNavLink") {
