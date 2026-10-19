@@ -1846,16 +1846,7 @@ window.openFranzAdminDashboard = async function () {
     await loadAdminDashboard();
     return true;
 };
-    // Hide the dashboard when navigating to another section.
-    document.querySelectorAll(".nav-links a").forEach(link => {
-        if (link.id === "adminNavLink") {
-            return;
-        }
-
-        link.addEventListener("click", function () {
-            adminSection.hidden = true;
-        });
-    });
+   // Dashboard visibility is managed by the main navigation system.
 
     // Refresh dashboard data.
     if (refreshButton) {
@@ -1871,5 +1862,105 @@ window.openFranzAdminDashboard = async function () {
     checkAdminAccess();
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const sectionIds = [
+        "home",
+        "workouts",
+        "profile",
+        "health",
+        "about",
+        "admin"
+    ];
+
+    const navLinks = document.querySelectorAll(".nav-links a");
+    const adminLink = document.getElementById("adminNavLink");
+
+    function showSection(sectionId) {
+        sectionIds.forEach(function (id) {
+            const section = document.getElementById(id);
+
+            if (section) {
+                section.hidden = id !== sectionId;
+            }
+        });
+
+        navLinks.forEach(function (link) {
+            link.classList.toggle(
+                "active",
+                link.getAttribute("href") === "#" + sectionId
+            );
+        });
+
+        const activeSection = document.getElementById(sectionId);
+
+        if (activeSection) {
+            activeSection.classList.remove("app-section-transition");
+            void activeSection.offsetWidth;
+            activeSection.classList.add("app-section-transition");
+        }
+    }
+
+    async function navigateTo(sectionId) {
+        if (!sectionIds.includes(sectionId)) {
+            return;
+        }
+
+        if (sectionId === "admin") {
+            if (typeof window.openFranzAdminDashboard !== "function") {
+                return;
+            }
+
+            const allowed = await window.openFranzAdminDashboard();
+
+            if (!allowed) {
+                return;
+            }
+        }
+
+        showSection(sectionId);
+
+        if (
+            sectionId === "profile" &&
+            typeof window.loadFranzProfile === "function"
+        ) {
+            window.loadFranzProfile();
+        }
+
+        history.replaceState(null, "", "#" + sectionId);
+    }
+
+    navLinks.forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            const sectionId = link.getAttribute("href").substring(1);
+
+            navigateTo(sectionId);
+        });
+    });
+
+    document.querySelectorAll('a[href="#workouts"], a[href="#health"]').forEach(
+        function (link) {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+
+                const sectionId = link.getAttribute("href").substring(1);
+
+                navigateTo(sectionId);
+            });
+        }
+    );
+
+    /* Start on the Home section without scrolling. */
+    showSection("home");
+
+    /* Hide the admin tab until the website permits access. */
+    if (adminLink && adminLink.hidden) {
+        adminLink.hidden = true;
+    }
+});
+</script>
+
 </body>
 </html>
