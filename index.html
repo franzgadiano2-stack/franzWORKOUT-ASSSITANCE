@@ -1255,6 +1255,138 @@
 
         })();
     </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const profileSection = document.getElementById("profile");
+    const profileForm = document.getElementById("profileForm");
+    const profileMessage = document.getElementById("profileMessage");
 
+    if (!profileSection || !profileForm) {
+        console.error("Profile section or form was not found.");
+        return;
+    }
+
+    const usernameInput = document.getElementById("profileUsername");
+    const ageInput = document.getElementById("profileAge");
+    const heightInput = document.getElementById("profileHeight");
+    const weightInput = document.getElementById("profileWeight");
+    const goalInput = document.getElementById("profileGoal");
+
+    let currentUserId = null;
+
+    async function loadProfile() {
+        try {
+            const { data: userData, error: userError } =
+                await supabaseClient.auth.getUser();
+
+            if (userError || !userData.user) {
+                profileMessage.textContent = "Please log in to view your profile.";
+                return;
+            }
+
+            currentUserId = userData.user.id;
+
+            const { data, error } = await supabaseClient
+                .from("profiles")
+                .select("username, age, height_cm, weight_kg, fitness_goal")
+                .eq("id", currentUserId)
+                .single();
+
+            if (error) {
+                console.error("Profile loading failed:", error);
+                profileMessage.textContent =
+                    "Could not load your profile. Please refresh and try again.";
+                return;
+            }
+
+            usernameInput.value = data.username || "";
+            ageInput.value = data.age ?? "";
+            heightInput.value = data.height_cm ?? "";
+            weightInput.value = data.weight_kg ?? "";
+            goalInput.value = data.fitness_goal || "";
+
+            profileMessage.textContent = "Profile loaded successfully.";
+        } catch (error) {
+            console.error("Profile error:", error);
+            profileMessage.textContent = "An unexpected error occurred.";
+        }
+    }
+
+    profileForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (!currentUserId) {
+            profileMessage.textContent = "Please log in again.";
+            return;
+        }
+
+        const age = Number(ageInput.value);
+        const height = Number(heightInput.value);
+        const weight = Number(weightInput.value);
+        const goal = goalInput.value;
+
+        if (
+            !Number.isInteger(age) || age < 13 || age > 120 ||
+            !Number.isFinite(height) || height <= 0 || height >= 300 ||
+            !Number.isFinite(weight) || weight <= 0 || weight >= 700 ||
+            !goal
+        ) {
+            profileMessage.textContent =
+                "Please enter a valid age, height, weight, and fitness goal.";
+            return;
+        }
+
+        const saveButton = profileForm.querySelector('button[type="submit"]');
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+
+        try {
+            const { error } = await supabaseClient
+                .from("profiles")
+                .update({
+                    age: age,
+                    height_cm: height,
+                    weight_kg: weight,
+                    fitness_goal: goal
+                })
+                .eq("id", currentUserId);
+
+            if (error) {
+                console.error("Profile saving failed:", error);
+                profileMessage.textContent =
+                    "Could not save your profile. Please try again.";
+                return;
+            }
+
+            profileMessage.textContent = "Profile saved successfully!";
+        } catch (error) {
+            console.error("Profile saving error:", error);
+            profileMessage.textContent = "An unexpected error occurred.";
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = "Save Profile";
+        }
+    });
+
+    document.querySelectorAll(".nav-links a").forEach(function (link) {
+        link.addEventListener("click", function () {
+            if (link.getAttribute("href") === "#profile") {
+                profileSection.hidden = false;
+
+                setTimeout(function () {
+                    profileSection.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }, 0);
+
+                loadProfile();
+            } else {
+                profileSection.hidden = true;
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>
