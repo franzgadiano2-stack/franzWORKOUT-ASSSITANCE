@@ -2081,10 +2081,6 @@ if (document.readyState === "loading") {
     initializeWorkoutSystem();
 }
 
-
-// =====================================================
-// END OF FRANZ WORKOUT ASSISTANCE SCRIPT
-// =====================================================
 ```javascript
 function showCategoryWorkoutPopup(category, matchingWorkouts) {
     const content = `
@@ -2130,3 +2126,7 @@ function showCategoryWorkoutPopup(category, matchingWorkouts) {
     createWorkoutModal(content);
 }
 ```
+
+// =====================================================
+// END OF FRANZ WORKOUT ASSISTANCE SCRIPT
+// =====================================================
