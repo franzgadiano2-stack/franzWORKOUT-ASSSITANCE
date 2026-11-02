@@ -1,6 +1,19 @@
 // =====================================================
 // FRANZ WORKOUT ASSISTANCE
-// UPGRADED MAIN JAVASCRIPT
+// COMPLETE MAIN JAVASCRIPT
+// =====================================================
+
+// This file handles workouts, recommendations, modals,
+// individual exercise timers, rest timers, and routines.
+//
+// Keep workouts.js loaded before this file.
+// Keep your authentication, profile, BMI, and admin
+// scripts in index.html unchanged.
+// =====================================================
+
+
+// =====================================================
+// DOM ELEMENTS
 // =====================================================
 
 const workoutContainer = document.getElementById("workoutContainer");
@@ -8,53 +21,63 @@ const resultsTitle = document.getElementById("resultsTitle");
 const resultsDescription = document.getElementById("resultsDescription");
 const recommendationResults = document.getElementById("recommendationResults");
 
-let timerInterval = null;
-let timerSeconds = 0;
-let timerOriginalSeconds = 0;
-let audioContext = null;
 
-// Exercise timer
-let exerciseInterval = null;
-let exerciseSeconds = 0;
-let exerciseOriginalSeconds = 0;
+// =====================================================
+// GLOBAL STATE
+// =====================================================
 
-// Routine tracking
+let activeWorkout = null;
 let activeRoutine = null;
+
 let routineSteps = [];
 let routineStepIndex = 0;
 let routineCompletedSteps = 0;
+
 let routineCurrentSet = 1;
 let routineTotalSets = 1;
-let routineIsRunning = false;
 
-// Individual workout tracking
-let activeWorkout = null;
-let activeWorkoutSet = 1;
-let activeWorkoutTotalSets = 1;
+let timerInterval = null;
+let timerSeconds = 0;
+let timerOriginalSeconds = 0;
+
+let exerciseTimerInterval = null;
+let exerciseSeconds = 0;
+let exerciseOriginalSeconds = 0;
+
+let individualCurrentSet = 1;
+let individualTotalSets = 1;
+
+let timerIsRunning = false;
+let exerciseTimerIsRunning = false;
+
+let routineIsRunning = false;
+let workoutModalElement = null;
 
 
 // =====================================================
-// SAFETY / TEXT HELPERS
+// GENERAL HELPERS
 // =====================================================
 
 function escapeHtml(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(value ?? "").replace(/[&<>"']/g, function (character) {
+        const entities = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        };
+
+        return entities[character];
+    });
 }
 
 
-// =====================================================
-// TIME HELPERS
-// =====================================================
+function formatTime(totalSeconds) {
+    const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
 
-function formatTime(seconds) {
-    const safeSeconds = Math.max(0, Math.floor(seconds));
-    const minutes = Math.floor(safeSeconds / 60);
-    const remainingSeconds = safeSeconds % 60;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
 
     return (
         String(minutes).padStart(2, "0") +
@@ -63,141 +86,154 @@ function formatTime(seconds) {
     );
 }
 
-function parseRestSeconds(restText) {
-    const text = String(restText || "").toLowerCase();
 
-    const minutesMatch = text.match(
-        /(\d+(?:\.\d+)?)\s*(?:min|mins|minute|minutes)/
-    );
+function parseRestSeconds(value) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return Math.max(0, Math.floor(value));
+    }
 
-    const secondsMatch = text.match(
-        /(\d+(?:\.\d+)?)\s*(?:sec|secs|second|seconds)/
-    );
+    if (value === null || value === undefined || value === "") {
+        return 0;
+    }
 
-    let totalSeconds = 0;
+    const text = String(value).toLowerCase().trim();
+
+    if (/as needed|as required|none|no rest/.test(text)) {
+        return 0;
+    }
+
+    const minutesMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|m)\b/);
 
     if (minutesMatch) {
-        totalSeconds += Number(minutesMatch[1]) * 60;
+        return Math.round(Number(minutesMatch[1]) * 60);
     }
+
+    const secondsMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/);
 
     if (secondsMatch) {
-        totalSeconds += Number(secondsMatch[1]);
+        return Math.round(Number(secondsMatch[1]));
     }
 
-    return Math.max(0, Math.round(totalSeconds));
-}
+    const numberMatch = text.match(/\d+(?:\.\d+)?/);
 
-function getExerciseDuration(workout) {
-    if (Number(workout.durationSeconds) > 0) {
-        return Number(workout.durationSeconds);
-    }
-
-    const text = String(workout.reps || "").toLowerCase();
-
-    const minuteMatch = text.match(
-        /(\d+(?:\.\d+)?)\s*(?:min|mins|minute|minutes)/
-    );
-
-    const secondMatch = text.match(
-        /(\d+(?:\.\d+)?)\s*(?:sec|secs|second|seconds)/
-    );
-
-    if (minuteMatch || secondMatch) {
-        return (
-            Number(minuteMatch?.[1] || 0) * 60 +
-            Number(secondMatch?.[1] || 0)
-        );
+    if (numberMatch) {
+        return Math.round(Number(numberMatch[0]));
     }
 
     return 0;
 }
 
-function isTimedWorkout(workout) {
-    return (
-        workout.exerciseType === "timed" ||
-        getExerciseDuration(workout) > 0
-    );
-}
 
-
-// =====================================================
-// AUDIO
-// =====================================================
-
-function prepareAudio() {
-    try {
-        if (!audioContext) {
-            const AudioContextClass =
-                window.AudioContext || window.webkitAudioContext;
-
-            if (!AudioContextClass) {
-                return;
-            }
-
-            audioContext = new AudioContextClass();
-        }
-
-        if (audioContext.state === "suspended") {
-            audioContext.resume();
-        }
-    } catch (error) {
-        console.log("Audio is not available in this browser.");
+function getExerciseDuration(workout) {
+    if (!workout) {
+        return 0;
     }
+
+    if (Number(workout.durationSeconds) > 0) {
+        return Number(workout.durationSeconds);
+    }
+
+    if (Number(workout.duration) > 0) {
+        return Number(workout.duration);
+    }
+
+    return 0;
 }
 
-function playBeep(frequency = 700, duration = 180, volume = 0.45) {
-    try {
-        prepareAudio();
 
-        if (!audioContext) {
+function getWorkoutRestSeconds(workout) {
+    if (!workout) {
+        return 0;
+    }
+
+    if (
+        workout.restSeconds !== undefined &&
+        workout.restSeconds !== null &&
+        workout.restSeconds !== ""
+    ) {
+        return parseRestSeconds(workout.restSeconds);
+    }
+
+    return parseRestSeconds(workout.rest);
+}
+
+
+function getWorkoutDifficulty(workout) {
+    return String(workout?.difficulty || "Beginner");
+}
+
+
+function getWorkoutCategory(workout) {
+    return String(workout?.category || "General");
+}
+
+
+function getWorkoutByNameSafe(name) {
+    if (typeof getWorkoutByName === "function") {
+        const found = getWorkoutByName(name);
+
+        if (found) {
+            return found;
+        }
+    }
+
+    if (!Array.isArray(workouts)) {
+        return null;
+    }
+
+    return workouts.find(function (workout) {
+        return String(workout.name).toLowerCase() ===
+            String(name).toLowerCase();
+    }) || null;
+}
+
+
+function playBeep(frequency = 750, duration = 150) {
+    try {
+        const AudioContextClass =
+            window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioContextClass) {
             return;
         }
 
+        const audioContext = new AudioContextClass();
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
 
         oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
 
-        oscillator.frequency.setValueAtTime(
-            frequency,
-            audioContext.currentTime
-        );
-
-        const startTime = audioContext.currentTime;
-        const endTime = startTime + duration / 1000;
-
-        gain.gain.setValueAtTime(0.0001, startTime);
-
-        gain.gain.exponentialRampToValueAtTime(
-            volume,
-            startTime + 0.015
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.0001,
-            endTime
-        );
+        gain.gain.value = 0.08;
 
         oscillator.connect(gain);
         gain.connect(audioContext.destination);
 
-        oscillator.start(startTime);
-        oscillator.stop(endTime + 0.03);
+        oscillator.start();
+
+        oscillator.stop(
+            audioContext.currentTime + duration / 1000
+        );
+
+        oscillator.onended = function () {
+            audioContext.close().catch(function () {});
+        };
     } catch (error) {
-        console.log("Timer sound could not be played.");
+        console.warn("Audio could not play:", error);
     }
 }
 
+
 function playCompletionSound() {
-    [
-        { frequency: 800, delay: 0 },
-        { frequency: 1000, delay: 250 },
-        { frequency: 1200, delay: 500 }
-    ].forEach(tone => {
-        setTimeout(() => {
-            playBeep(tone.frequency, 180);
-        }, tone.delay);
-    });
+    playBeep(700, 120);
+
+    setTimeout(function () {
+        playBeep(900, 160);
+    }, 180);
+
+    setTimeout(function () {
+        playBeep(1100, 220);
+    }, 400);
 }
 
 
@@ -205,279 +241,347 @@ function playCompletionSound() {
 // TIMER CLEANUP
 // =====================================================
 
-function stopTimer() {
-    if (timerInterval) {
+function stopRestTimer() {
+    if (timerInterval !== null) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
+
+    timerIsRunning = false;
 }
+
 
 function stopExerciseTimer() {
-    if (exerciseInterval) {
-        clearInterval(exerciseInterval);
-        exerciseInterval = null;
+    if (exerciseTimerInterval !== null) {
+        clearInterval(exerciseTimerInterval);
+        exerciseTimerInterval = null;
     }
+
+    exerciseTimerIsRunning = false;
 }
 
+
 function stopAllTimers() {
-    stopTimer();
+    stopRestTimer();
     stopExerciseTimer();
 }
 
 
 // =====================================================
-// DISPLAY WORKOUTS
+// WORKOUT DISPLAY
 // =====================================================
 
 function displayWorkouts(category = "All") {
-    if (!workoutContainer || !Array.isArray(workouts)) {
+    if (!workoutContainer) {
         return;
     }
 
+    if (!Array.isArray(workouts)) {
+        workoutContainer.innerHTML =
+            "<p>Workout data could not be loaded.</p>";
+
+        return;
+    }
+
+    const selectedCategory = String(category || "All").toLowerCase();
+
+    const filteredWorkouts = workouts.filter(function (workout) {
+        if (
+            selectedCategory === "all" ||
+            selectedCategory === ""
+        ) {
+            return true;
+        }
+
+        return String(workout.category || "").toLowerCase() ===
+            selectedCategory;
+    });
+
     workoutContainer.innerHTML = "";
 
-    const filteredWorkouts =
-        category === "All"
-            ? workouts
-            : workouts.filter(workout => workout.category === category);
+    if (filteredWorkouts.length === 0) {
+        workoutContainer.innerHTML = `
+            <div class="no-workouts-message">
+                <h3>No workouts found</h3>
+                <p>Try selecting another workout category.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+    filteredWorkouts.forEach(function (workout) {
+        const originalIndex = workouts.indexOf(workout);
+
+        const card = document.createElement("article");
+
+        card.className = "workout-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+
+        card.setAttribute(
+            "aria-label",
+            "Open workout: " + workout.name
+        );
+
+        card.innerHTML = `
+            <div class="workout-card-content">
+
+                <span class="workout-category">
+                    ${escapeHtml(getWorkoutCategory(workout))}
+                </span>
+
+                <span class="workout-difficulty">
+                    ${escapeHtml(getWorkoutDifficulty(workout))}
+                </span>
+
+                <h3>${escapeHtml(workout.name)}</h3>
+
+                <p class="workout-target">
+                    <strong>Target:</strong>
+                    ${escapeHtml(workout.target || "General fitness")}
+                </p>
+
+                <p class="workout-description">
+                    ${escapeHtml(workout.description || "")}
+                </p>
+
+                <div class="workout-card-details">
+                    <span>
+                        <strong>Sets:</strong>
+                        ${escapeHtml(workout.sets ?? 1)}
+                    </span>
+
+                    <span>
+                        <strong>Reps / Time:</strong>
+                        ${escapeHtml(workout.reps || "Follow instructions")}
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    class="start-workout-button"
+                    data-workout-index="${originalIndex}">
+                    OPEN EXERCISE
+                </button>
+
+            </div>
+        `;
+
+        card.addEventListener("click", function (event) {
+            if (event.target.closest("button")) {
+                return;
+            }
+
+            startWorkoutByIndex(originalIndex);
+        });
+
+        card.addEventListener("keydown", function (event) {
+            if (
+                event.target === card &&
+                (event.key === "Enter" || event.key === " ")
+            ) {
+                event.preventDefault();
+                startWorkoutByIndex(originalIndex);
+            }
+        });
+
+        const button = card.querySelector(".start-workout-button");
+
+        button.addEventListener("click", function (event) {
+            event.stopPropagation();
+            startWorkoutByIndex(originalIndex);
+        });
+
+        workoutContainer.appendChild(card);
+    });
 
     if (resultsTitle) {
         resultsTitle.textContent =
-            category === "All"
-                ? "All Exercises"
-                : `${category} Exercises`;
+            selectedCategory === "all"
+                ? "All Workouts"
+                : category + " Workouts";
     }
 
     if (resultsDescription) {
         resultsDescription.textContent =
-            category === "All"
-                ? "Browse individual exercises or explore complete workout routines."
-                : `Exercises selected from the ${category.toLowerCase()} category.`;
+            filteredWorkouts.length +
+            " workout" +
+            (filteredWorkouts.length === 1 ? "" : "s") +
+            " available.";
     }
-
-    if (filteredWorkouts.length === 0) {
-        workoutContainer.innerHTML = `
-            <div class="no-workouts">
-                <h3>No exercises found</h3>
-                <p>There are currently no exercises in this category.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    filteredWorkouts.forEach(workout => {
-        const card = document.createElement("div");
-        card.className = "workout-card";
-
-        card.innerHTML = `
-            <div class="workout-top">
-                <span class="category">
-                    ${escapeHtml(workout.category)}
-                </span>
-
-                <span class="difficulty">
-                    ${escapeHtml(workout.difficulty)}
-                </span>
-            </div>
-
-            <h3>${escapeHtml(workout.name)}</h3>
-
-            <p class="target">
-                <strong>Target:</strong>
-                ${escapeHtml(workout.target)}
-            </p>
-
-            <p class="description">
-                ${escapeHtml(workout.description)}
-            </p>
-
-            <div class="workout-details">
-                <div>
-                    <strong>${escapeHtml(workout.sets)}</strong>
-                    <small>Sets</small>
-                </div>
-
-                <div>
-                    <strong>${escapeHtml(workout.reps)}</strong>
-                    <small>Reps / Time</small>
-                </div>
-
-                <div>
-                    <strong>${escapeHtml(workout.rest)}</strong>
-                    <small>Rest</small>
-                </div>
-            </div>
-
-            <div class="benefit-box">
-                <strong>FITNESS BENEFIT</strong>
-                <p>${escapeHtml(workout.benefit)}</p>
-            </div>
-
-            <button
-                class="start-button"
-                type="button"
-                data-workout-name="${escapeHtml(workout.name)}">
-                VIEW AND START
-            </button>
-        `;
-
-        card.querySelector(".start-button").addEventListener(
-            "click",
-            () => startWorkout(workout)
-        );
-
-        workoutContainer.appendChild(card);
-    });
 }
 
 
 // =====================================================
-// FILTER WORKOUTS
+// CATEGORY FILTERING
 // =====================================================
 
 function filterWorkouts(category) {
-    displayWorkouts(category);
-
-    document.querySelectorAll(".categories button").forEach(button => {
-        button.classList.remove("active");
-
-        if (
-            button.textContent.trim().toLowerCase() ===
-            String(category).toLowerCase()
-        ) {
-            button.classList.add("active");
-        }
-    });
-
-    const results = document.getElementById("workoutResults");
-
-    if (results) {
-        setTimeout(() => {
-            results.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-        }, 50);
-    }
+    displayWorkouts(category || "All");
 }
 
 
 // =====================================================
-// RECOMMENDATIONS
+// WORKOUT RECOMMENDATIONS
 // =====================================================
 
-const recommendationMap = {
-    general: ["Cardio", "Legs", "Chest", "Core"],
-    strength: ["Chest", "Back", "Legs", "Shoulders", "Arms"],
-    cardio: ["Cardio"],
-    upper: ["Chest", "Back", "Shoulders", "Arms"],
-    lower: ["Legs"],
-    core: ["Core"],
-    mobility: ["Cardio", "Legs", "Core"]
-};
-
 function findRecommendedWorkouts() {
-    const goal =
-        document.getElementById("fitnessGoal")?.value || "general";
-
-    const level =
-        document.getElementById("fitnessLevel")?.value || "Beginner";
-
-    const preferredCategories =
-        recommendationMap[goal] || ["Cardio", "Legs"];
-
-    let recommended = workouts.filter(workout =>
-        preferredCategories.includes(workout.category) &&
-        workout.difficulty === level
-    );
-
-    if (recommended.length < 3) {
-        recommended = workouts.filter(workout =>
-            preferredCategories.includes(workout.category) &&
-            (
-                workout.difficulty === level ||
-                workout.difficulty === "Beginner"
-            )
-        );
-    }
-
-    recommended = recommended.slice(0, 5);
-
     if (!recommendationResults) {
         return;
     }
 
-    const goalNames = {
-        general: "General Fitness",
-        strength: "Strength",
-        cardio: "Cardio & Endurance",
-        upper: "Upper Body",
-        lower: "Lower Body",
-        core: "Core",
-        mobility: "Movement & Mobility"
-    };
+    const goalElement = document.getElementById("fitnessGoal");
+    const levelElement = document.getElementById("fitnessLevel");
+
+    const goal = goalElement
+        ? String(goalElement.value || "general").toLowerCase()
+        : "general";
+
+    const level = levelElement
+        ? String(levelElement.value || "Beginner").toLowerCase()
+        : "beginner";
+
+    const matchingWorkouts = (Array.isArray(workouts) ? workouts : [])
+        .filter(function (workout) {
+            const difficulty = getWorkoutDifficulty(workout).toLowerCase();
+
+            const target = String(workout.target || "").toLowerCase();
+            const category = getWorkoutCategory(workout).toLowerCase();
+
+            const difficultyMatches =
+                difficulty === level ||
+                (
+                    level === "beginner" &&
+                    difficulty === "beginner"
+                );
+
+            let goalMatches = true;
+
+            if (goal !== "general" && goal !== "all") {
+                switch (goal) {
+                    case "cardio":
+                        goalMatches =
+                            category.includes("cardio") ||
+                            target.includes("cardio") ||
+                            target.includes("heart");
+                        break;
+
+                    case "strength":
+                        goalMatches =
+                            category.includes("strength") ||
+                            target.includes("muscle") ||
+                            target.includes("strength");
+                        break;
+
+                    case "upper":
+                    case "upper body":
+                        goalMatches =
+                            target.includes("chest") ||
+                            target.includes("arm") ||
+                            target.includes("shoulder") ||
+                            target.includes("back") ||
+                            target.includes("upper");
+                        break;
+
+                    case "lower":
+                    case "lower body":
+                        goalMatches =
+                            target.includes("leg") ||
+                            target.includes("glute") ||
+                            target.includes("calf") ||
+                            target.includes("lower");
+                        break;
+
+                    case "core":
+                        goalMatches =
+                            target.includes("core") ||
+                            target.includes("ab") ||
+                            category.includes("core");
+                        break;
+
+                    case "mobility":
+                        goalMatches =
+                            category.includes("mobility") ||
+                            category.includes("flexibility") ||
+                            target.includes("mobility");
+                        break;
+
+                    default:
+                        goalMatches =
+                            category.includes(goal) ||
+                            target.includes(goal);
+                }
+            }
+
+            return difficultyMatches && goalMatches;
+        });
+
+    if (matchingWorkouts.length === 0) {
+        recommendationResults.innerHTML = `
+            <div class="recommendation-empty">
+                <h3>No exact matches found</h3>
+                <p>
+                    Try another fitness goal or difficulty level.
+                    You can also browse all available exercises.
+                </p>
+
+                <button
+                    type="button"
+                    onclick="displayWorkouts('All')">
+                    VIEW ALL WORKOUTS
+                </button>
+            </div>
+        `;
+
+        return;
+    }
 
     recommendationResults.innerHTML = `
         <div class="recommendation-heading">
-            <p>RECOMMENDED FOR YOU</p>
+            <h3>Recommended Exercises</h3>
 
-            <h3>
-                ${escapeHtml(goalNames[goal] || "General Fitness")}
-                ·
-                ${escapeHtml(level)}
-            </h3>
+            <p>
+                Based on your selected fitness goal and difficulty.
+            </p>
         </div>
 
         <div class="recommendation-grid">
-            ${
-                recommended.length
-                    ? recommended.map(workout => `
-                        <div class="recommendation-card">
-                            <span>${escapeHtml(workout.category)}</span>
-                            <h4>${escapeHtml(workout.name)}</h4>
-                            <p>${escapeHtml(workout.target)}</p>
+            ${matchingWorkouts.map(function (workout) {
+                const index = workouts.indexOf(workout);
 
-                            <button
-                                type="button"
-                                data-recommend-workout="${escapeHtml(workout.name)}">
-                                VIEW WORKOUT
-                            </button>
-                        </div>
-                    `).join("")
-                    : `
-                        <div class="no-workouts">
-                            <h3>No recommendation available</h3>
-                            <p>Try another goal or experience level.</p>
-                        </div>
-                    `
-            }
+                return `
+                    <article class="recommendation-card">
+
+                        <span>
+                            ${escapeHtml(getWorkoutDifficulty(workout))}
+                        </span>
+
+                        <h4>${escapeHtml(workout.name)}</h4>
+
+                        <p>
+                            ${escapeHtml(workout.description || "")}
+                        </p>
+
+                        <button
+                            type="button"
+                            onclick="startWorkoutByIndex(${index})">
+                            OPEN EXERCISE
+                        </button>
+
+                    </article>
+                `;
+            }).join("")}
         </div>
     `;
-
-    recommendationResults
-        .querySelectorAll("[data-recommend-workout]")
-        .forEach(button => {
-            button.addEventListener("click", () => {
-                openWorkoutByName(button.dataset.recommendWorkout);
-            });
-        });
-}
-
-function openWorkoutByName(name) {
-    const workout = workouts.find(item => item.name === name);
-
-    if (workout) {
-        startWorkout(workout);
-    }
 }
 
 
 // =====================================================
-// MODAL HELPERS
+// CREATE OR REPLACE WORKOUT MODAL
 // =====================================================
 
-function removeWorkoutModal() {
+function createWorkoutModal(content) {
     stopAllTimers();
 
     const existingModal = document.getElementById("workoutModal");
@@ -486,153 +590,187 @@ function removeWorkoutModal() {
         existingModal.remove();
     }
 
-    document.body.classList.remove("modal-open");
-}
-
-function createWorkoutModal(content) {
-    removeWorkoutModal();
-
     const modal = document.createElement("div");
 
     modal.id = "workoutModal";
     modal.className = "workout-modal";
 
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Workout details");
+
     modal.innerHTML = `
         <div class="workout-modal-box">
+
             <button
-                class="modal-close"
                 type="button"
+                class="workout-modal-x"
                 aria-label="Close workout"
                 onclick="closeWorkoutModal()">
-                ×
+                &times;
             </button>
 
-            <div class="modal-content">
+            <div class="workout-modal-content">
                 ${content}
             </div>
+
         </div>
     `;
 
-    document.body.appendChild(modal);
-    document.body.classList.add("modal-open");
-
-    modal.addEventListener("click", event => {
+    modal.addEventListener("click", function (event) {
         if (event.target === modal) {
             closeWorkoutModal();
         }
     });
 
-    return modal;
+    document.body.appendChild(modal);
+
+    document.body.classList.add("modal-open");
+
+    workoutModalElement = modal;
+
+    requestAnimationFrame(function () {
+        modal.classList.add("active");
+
+        const closeButton = modal.querySelector(".workout-modal-x");
+
+        if (closeButton) {
+            closeButton.focus();
+        }
+    });
 }
 
 
 // =====================================================
-// INDIVIDUAL WORKOUT
+// OPEN AN INDIVIDUAL WORKOUT
 // =====================================================
 
 function startWorkoutByIndex(index) {
+    if (!Array.isArray(workouts)) {
+        return;
+    }
+
     const workout = workouts[index];
 
-    if (workout) {
-        startWorkout(workout);
+    if (!workout) {
+        return;
     }
+
+    startWorkout(workout);
 }
+
+
+function openWorkoutByName(name) {
+    const workout = getWorkoutByNameSafe(name);
+
+    if (!workout) {
+        alert("The requested exercise could not be found.");
+        return;
+    }
+
+    startWorkout(workout);
+}
+
 
 function startWorkout(workout) {
     if (!workout) {
         return;
     }
 
-    activeRoutine = null;
-    routineSteps = [];
-    routineStepIndex = 0;
-    routineCompletedSteps = 0;
+    stopAllTimers();
 
     activeWorkout = workout;
+    activeRoutine = null;
 
-    activeWorkoutSet = 1;
-    activeWorkoutTotalSets = Math.max(
+    individualCurrentSet = 1;
+
+    individualTotalSets = Math.max(
         1,
-        Number.parseInt(workout.sets, 10) || 1
+        Number(workout.sets) || 1
     );
 
-    const timed = isTimedWorkout(workout);
+    exerciseOriginalSeconds = getExerciseDuration(workout);
+    exerciseSeconds = exerciseOriginalSeconds;
+
+    timerOriginalSeconds = getWorkoutRestSeconds(workout);
+    timerSeconds = timerOriginalSeconds;
+
+    renderIndividualWorkout();
+}
+
+
+function renderIndividualWorkout() {
+    if (!activeWorkout) {
+        return;
+    }
+
+    const workout = activeWorkout;
+
     const duration = getExerciseDuration(workout);
-    const restSeconds = parseRestSeconds(
-        workout.restSeconds ?? workout.rest
-    );
 
-    exerciseOriginalSeconds = duration;
-    exerciseSeconds = duration;
+    const instructions = workout.instructions
+        ? `
+            <div class="workout-instructions">
+                <h4>Instructions</h4>
+                <p>${escapeHtml(workout.instructions)}</p>
+            </div>
+        `
+        : "";
 
-    timerOriginalSeconds = restSeconds;
-    timerSeconds = restSeconds;
+    const benefit = workout.benefit
+        ? `
+            <div class="workout-benefit">
+                <h4>Fitness Benefit</h4>
+                <p>${escapeHtml(workout.benefit)}</p>
+            </div>
+        `
+        : "";
 
     createWorkoutModal(`
         <p class="modal-brand">FRANZ WORKOUT ASSISTANCE</p>
 
+        <span class="workout-difficulty">
+            ${escapeHtml(getWorkoutDifficulty(workout))}
+        </span>
+
         <h2>${escapeHtml(workout.name)}</h2>
 
-        <div class="modal-line"></div>
-
         <p>
-            <strong>Category:</strong>
-            ${escapeHtml(workout.category)}
+            <strong>Target:</strong>
+            ${escapeHtml(workout.target || "General fitness")}
         </p>
 
-        <p>
-            <strong>Difficulty:</strong>
-            ${escapeHtml(workout.difficulty)}
-        </p>
+        <p>${escapeHtml(workout.description || "")}</p>
 
-        <div class="modal-target">
-            <strong>TARGET</strong>
-            <p>${escapeHtml(workout.target)}</p>
-        </div>
+        ${instructions}
 
-        <div class="modal-description">
-            <strong>EXERCISE DESCRIPTION</strong>
-            <p>${escapeHtml(workout.description)}</p>
-        </div>
-
-        ${
-            workout.instructions
-                ? `
-                    <div class="modal-description">
-                        <strong>HOW TO PERFORM</strong>
-                        <p>${escapeHtml(workout.instructions)}</p>
-                    </div>
-                `
-                : ""
-        }
-
-        <div class="modal-benefit">
-            <strong>FITNESS BENEFIT</strong>
-            <p>${escapeHtml(workout.benefit)}</p>
-        </div>
+        ${benefit}
 
         <div class="modal-details">
+
             <div>
-                <strong>${escapeHtml(workout.sets)}</strong>
+                <strong>${individualTotalSets}</strong>
                 <span>SETS</span>
             </div>
 
             <div>
-                <strong>${escapeHtml(workout.reps)}</strong>
+                <strong>${escapeHtml(workout.reps || "As instructed")}</strong>
                 <span>REPS / TIME</span>
             </div>
 
             <div>
-                <strong>${escapeHtml(workout.rest)}</strong>
+                <strong>${escapeHtml(workout.rest || "As needed")}</strong>
                 <span>REST</span>
             </div>
+
         </div>
 
         <div class="timer-box">
+
             <p>SET PROGRESS</p>
 
-            <h3 id="setProgress">
-                Set ${activeWorkoutSet} of ${activeWorkoutTotalSets}
+            <h3 id="individualSetProgress">
+                Set ${individualCurrentSet} of ${individualTotalSets}
             </h3>
 
             <div class="timer-buttons">
@@ -642,25 +780,30 @@ function startWorkout(workout) {
                     COMPLETE SET
                 </button>
             </div>
+
         </div>
 
         ${
-            timed
+            duration > 0
                 ? `
                     <div class="timer-box">
+
                         <p>EXERCISE TIMER</p>
 
-                        <div id="exerciseTimerDisplay"
-                             class="timer-display">
+                        <div
+                            id="exerciseTimerDisplay"
+                            class="timer-display">
                             ${formatTime(duration)}
                         </div>
 
-                        <div id="exerciseTimerStatus"
-                             class="timer-status">
+                        <div
+                            id="exerciseTimerStatus"
+                            class="timer-status">
                             Ready
                         </div>
 
                         <div class="timer-buttons">
+
                             <button
                                 type="button"
                                 onclick="startExerciseTimer()">
@@ -680,23 +823,35 @@ function startWorkout(workout) {
                                 onclick="resetExerciseTimer()">
                                 RESET
                             </button>
+
                         </div>
+
                     </div>
                 `
                 : `
                     <div class="timer-box">
+
                         <p>REPETITION GUIDE</p>
-                        <h3>${escapeHtml(workout.reps)}</h3>
-                        <p>Complete the repetitions using controlled movements.</p>
+
+                        <h3>
+                            ${escapeHtml(workout.reps || "Follow instructions")}
+                        </h3>
+
+                        <p>
+                            Complete the prescribed repetitions
+                            with controlled movements.
+                        </p>
+
                     </div>
                 `
         }
 
         <div class="timer-box">
+
             <p>REST TIMER</p>
 
             <div id="timerDisplay" class="timer-display">
-                ${formatTime(restSeconds)}
+                ${formatTime(timerSeconds)}
             </div>
 
             <div id="timerStatus" class="timer-status">
@@ -704,7 +859,10 @@ function startWorkout(workout) {
             </div>
 
             <div class="timer-buttons">
-                <button type="button" onclick="startTimer()">
+
+                <button
+                    type="button"
+                    onclick="startTimer()">
                     START REST
                 </button>
 
@@ -721,51 +879,65 @@ function startWorkout(workout) {
                     onclick="resetTimer()">
                     RESET
                 </button>
+
             </div>
+
         </div>
 
-        <p class="form-reminder">
-            Use proper form and a comfortable pace. Stop if you feel pain,
-            dizziness, or unusual discomfort. Rest when needed.
-        </p>
+        <div class="timer-buttons">
 
-        <button
-            type="button"
-            class="modal-close-bottom"
-            onclick="closeWorkoutModal()">
-            CLOSE WORKOUT
-        </button>
+            <button
+                type="button"
+                class="timer-secondary"
+                onclick="closeWorkoutModal()">
+                CLOSE
+            </button>
+
+        </div>
     `);
 
     updateTimerDisplay();
     updateExerciseTimerDisplay();
 }
 
+
+// =====================================================
+// INDIVIDUAL SET TRACKING
+// =====================================================
+
 function completeWorkoutSet() {
     if (!activeWorkout) {
         return;
     }
 
-    if (activeWorkoutSet < activeWorkoutTotalSets) {
-        activeWorkoutSet++;
+    const progress = document.getElementById("individualSetProgress");
 
-        const progress = document.getElementById("setProgress");
+    if (individualCurrentSet < individualTotalSets) {
+        individualCurrentSet++;
 
         if (progress) {
             progress.textContent =
-                `Set ${activeWorkoutSet} of ${activeWorkoutTotalSets}`;
+                "Set " +
+                individualCurrentSet +
+                " of " +
+                individualTotalSets;
         }
 
         playBeep(750, 120);
-    } else {
-        const progress = document.getElementById("setProgress");
 
-        if (progress) {
-            progress.textContent = "All sets completed!";
-        }
-
-        playCompletionSound();
+        return;
     }
+
+    if (progress && progress.dataset.completed === "true") {
+        return;
+    }
+
+    if (progress) {
+        progress.textContent = "All sets completed!";
+        progress.dataset.completed = "true";
+    }
+
+    playCompletionSound();
 }
 
 
@@ -781,17 +953,21 @@ function updateExerciseTimerDisplay() {
         display.textContent = formatTime(exerciseSeconds);
     }
 
-    if (status && exerciseSeconds > 0) {
-        status.textContent =
-            exerciseInterval ? "Exercise in progress..." : "Ready";
+    if (status) {
+        if (exerciseSeconds <= 0) {
+            status.textContent = "Exercise time completed!";
+        } else if (exerciseTimerIsRunning) {
+            status.textContent = "Exercise in progress";
+        } else if (exerciseSeconds === exerciseOriginalSeconds) {
+            status.textContent = "Ready";
+        } else {
+            status.textContent = "Paused";
+        }
     }
 }
 
-function startExerciseTimer() {
-    if (exerciseInterval) {
-        return;
-    }
 
+function startExerciseTimer() {
     if (exerciseOriginalSeconds <= 0) {
         return;
     }
@@ -800,48 +976,37 @@ function startExerciseTimer() {
         exerciseSeconds = exerciseOriginalSeconds;
     }
 
-    prepareAudio();
+    if (exerciseTimerIsRunning) {
+        return;
+    }
 
-    exerciseInterval = setInterval(() => {
+    exerciseTimerIsRunning = true;
+
+    updateExerciseTimerDisplay();
+
+    exerciseTimerInterval = setInterval(function () {
         exerciseSeconds--;
 
         updateExerciseTimerDisplay();
-
-        if (exerciseSeconds > 0 && exerciseSeconds <= 3) {
-            playBeep(650, 120);
-        }
 
         if (exerciseSeconds <= 0) {
             stopExerciseTimer();
 
             exerciseSeconds = 0;
+
             updateExerciseTimerDisplay();
-
-            const status =
-                document.getElementById("exerciseTimerStatus");
-
-            if (status) {
-                status.textContent = "EXERCISE TIME COMPLETE!";
-            }
 
             playCompletionSound();
         }
     }, 1000);
 }
 
+
 function pauseExerciseTimer() {
-    if (!exerciseInterval) {
-        return;
-    }
-
     stopExerciseTimer();
-
-    const status = document.getElementById("exerciseTimerStatus");
-
-    if (status) {
-        status.textContent = "Paused";
-    }
+    updateExerciseTimerDisplay();
 }
+
 
 function resetExerciseTimer() {
     stopExerciseTimer();
@@ -849,12 +1014,6 @@ function resetExerciseTimer() {
     exerciseSeconds = exerciseOriginalSeconds;
 
     updateExerciseTimerDisplay();
-
-    const status = document.getElementById("exerciseTimerStatus");
-
-    if (status) {
-        status.textContent = "Ready";
-    }
 }
 
 
@@ -870,14 +1029,28 @@ function updateTimerDisplay() {
         display.textContent = formatTime(timerSeconds);
     }
 
-    if (status && timerSeconds > 0) {
-        status.textContent =
-            timerInterval ? "Rest timer running..." : "Ready";
+    if (status) {
+        if (timerSeconds <= 0) {
+            status.textContent = "Rest completed!";
+        } else if (timerIsRunning) {
+            status.textContent = "Rest in progress";
+        } else if (timerSeconds === timerOriginalSeconds) {
+            status.textContent = "Ready";
+        } else {
+            status.textContent = "Paused";
+        }
     }
 }
 
+
 function startTimer() {
-    if (timerInterval) {
+    if (timerOriginalSeconds <= 0) {
+        const status = document.getElementById("timerStatus");
+
+        if (status) {
+            status.textContent = "No timed rest required.";
+        }
+
         return;
     }
 
@@ -885,97 +1058,105 @@ function startTimer() {
         timerSeconds = timerOriginalSeconds;
     }
 
-    if (timerSeconds <= 0) {
-        const status = document.getElementById("timerStatus");
-
-        if (status) {
-            status.textContent = "No rest time configured.";
-        }
-
+    if (timerIsRunning) {
         return;
     }
 
-    prepareAudio();
+    timerIsRunning = true;
 
-    timerInterval = setInterval(() => {
+    updateTimerDisplay();
+
+    timerInterval = setInterval(function () {
         timerSeconds--;
 
         updateTimerDisplay();
 
-        if (timerSeconds > 0 && timerSeconds <= 3) {
-            playBeep(650, 120);
-        }
-
         if (timerSeconds <= 0) {
-            stopTimer();
+            stopRestTimer();
 
             timerSeconds = 0;
+
             updateTimerDisplay();
-
-            const status = document.getElementById("timerStatus");
-
-            if (status) {
-                status.textContent = "REST COMPLETE!";
-            }
 
             playCompletionSound();
         }
     }, 1000);
 }
 
+
 function pauseTimer() {
-    if (!timerInterval) {
-        return;
-    }
-
-    stopTimer();
-
-    const status = document.getElementById("timerStatus");
-
-    if (status) {
-        status.textContent = "Paused";
-    }
+    stopRestTimer();
+    updateTimerDisplay();
 }
 
+
 function resetTimer() {
-    stopTimer();
+    stopRestTimer();
 
     timerSeconds = timerOriginalSeconds;
 
     updateTimerDisplay();
-
-    const status = document.getElementById("timerStatus");
-
-    if (status) {
-        status.textContent = "Ready";
-    }
 }
 
 
 // =====================================================
-// WORKOUT ROUTINE INTERFACE
+// ROUTINE INTERFACE
 // =====================================================
 
 function ensureRoutineInterface() {
     const workoutsSection = document.getElementById("workouts");
 
-    if (!workoutsSection || document.getElementById("routineSection")) {
+    if (!workoutsSection) {
         return;
     }
 
-    const section = document.createElement("div");
+    if (document.getElementById("routineSection")) {
+        renderWorkoutRoutines();
+        return;
+    }
 
-    section.id = "routineSection";
-    section.className = "routine-section";
+    const routineSection = document.createElement("section");
 
-    section.innerHTML = `
+    routineSection.id = "routineSection";
+    routineSection.className = "routine-section";
+
+    routineSection.innerHTML = `
         <div class="routine-heading">
-            <p>TRAIN WITH A PLAN</p>
+
             <h2>Complete Workout Routines</h2>
+
             <p>
-                Choose a routine and follow each exercise in order.
-                You can also open any individual exercise above.
+                Choose a planned sequence of exercises
+                and follow each step at your own pace.
             </p>
+
+        </div>
+
+        <div class="routine-filter">
+
+            <label for="routineDifficulty">
+                Difficulty
+            </label>
+
+            <select id="routineDifficulty">
+                <option value="All">All Levels</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+
+            <label for="routineGoal">
+                Fitness Goal
+            </label>
+
+            <select id="routineGoal">
+                <option value="All">All Goals</option>
+                <option value="general">General Fitness</option>
+                <option value="cardio">Cardio</option>
+                <option value="strength">Strength</option>
+                <option value="core">Core</option>
+            </select>
+
         </div>
 
         <div id="routineContainer" class="routine-grid"></div>
@@ -983,87 +1164,162 @@ function ensureRoutineInterface() {
 
     const workoutResults = document.getElementById("workoutResults");
 
-    if (workoutResults) {
-        workoutsSection.insertBefore(section, workoutResults);
+    if (
+        workoutResults &&
+        workoutResults.parentElement === workoutsSection
+    ) {
+        workoutsSection.insertBefore(routineSection, workoutResults);
     } else {
-        workoutsSection.appendChild(section);
+        workoutsSection.appendChild(routineSection);
     }
 
-    displayRoutines();
-}
-
-function getRoutineDifficulty(routine) {
-    return routine.difficulty || "Beginner";
-}
-
-function getRoutineDescription(routine) {
-    return (
-        routine.description ||
-        "Follow the exercises in this routine at a comfortable pace."
+    document.getElementById("routineDifficulty").addEventListener(
+        "change",
+        renderWorkoutRoutines
     );
-}
 
-function getRoutineSteps(routine) {
-    return routine.steps || routine.exercises || [];
-}
+    document.getElementById("routineGoal").addEventListener(
+        "change",
+        renderWorkoutRoutines
+    );
 
-function displayRoutines() {
-    const container = document.getElementById("routineContainer");
-
-    if (!container || !Array.isArray(workoutRoutines)) {
-        return;
-    }
-
-    container.innerHTML = "";
-
-    if (workoutRoutines.length === 0) {
-        container.innerHTML = `
-            <p>No routines are available yet.</p>
-        `;
-
-        return;
-    }
-
-    workoutRoutines.forEach((routine, index) => {
-        const steps = getRoutineSteps(routine);
-
-        const card = document.createElement("div");
-
-        card.className = "routine-card";
-
-        card.innerHTML = `
-            <span class="difficulty">
-                ${escapeHtml(getRoutineDifficulty(routine))}
-            </span>
-
-            <h3>${escapeHtml(routine.name || "Workout Routine")}</h3>
-
-            <p>${escapeHtml(getRoutineDescription(routine))}</p>
-
-            <p>
-                <strong>${steps.length}</strong>
-                exercise steps
-            </p>
-
-            <button
-                type="button"
-                class="start-button"
-                data-routine-index="${index}">
-                START COMPLETE ROUTINE
-            </button>
-        `;
-
-        card.querySelector("button").addEventListener("click", () => {
-            startWorkoutRoutine(routine);
-        });
-
-        container.appendChild(card);
-    });
+    renderWorkoutRoutines();
 }
 
 
 // =====================================================
-// ROUTINE STEP NORMALIZATION
+// DISPLAY COMPLETE ROUTINES
+// =====================================================
+
+function renderWorkoutRoutines() {
+    const container = document.getElementById("routineContainer");
+
+    if (!container) {
+        return;
+    }
+
+    const allRoutines = Array.isArray(workoutRoutines)
+        ? workoutRoutines
+        : [];
+
+    const difficultyElement = document.getElementById("routineDifficulty");
+    const goalElement = document.getElementById("routineGoal");
+
+    const selectedDifficulty = difficultyElement
+        ? difficultyElement.value
+        : "All";
+
+    const selectedGoal = goalElement
+        ? goalElement.value
+        : "All";
+
+    const filteredRoutines = allRoutines.filter(function (routine) {
+        const difficultyMatches =
+            selectedDifficulty === "All" ||
+            routine.difficulty === selectedDifficulty;
+
+        const goalMatches =
+            selectedGoal === "All" ||
+            routine.goal === selectedGoal;
+
+        return difficultyMatches && goalMatches;
+    });
+
+    if (filteredRoutines.length === 0) {
+        container.innerHTML = `
+            <div class="no-workouts-message">
+                <h3>No routines available</h3>
+
+                <p>
+                    No routine matches these filters yet.
+                    Try another difficulty or fitness goal.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = filteredRoutines.map(function (routine) {
+        const stepCount = getRoutineSteps(routine).length;
+
+        return `
+            <article class="routine-card">
+
+                <span class="routine-difficulty">
+                    ${escapeHtml(routine.difficulty || "Beginner")}
+                </span>
+
+                <h3>${escapeHtml(routine.name)}</h3>
+
+                <p>${escapeHtml(routine.description || "")}</p>
+
+                <div class="routine-card-details">
+
+                    <span>
+                        <strong>Steps:</strong>
+                        ${stepCount}
+                    </span>
+
+                    <span>
+                        <strong>Estimated:</strong>
+                        ${escapeHtml(routine.estimatedMinutes || "?")} min
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="start-routine-button"
+                    data-routine-id="${escapeHtml(routine.id)}">
+                    START COMPLETE ROUTINE
+                </button>
+
+            </article>
+        `;
+    }).join("");
+
+    container.querySelectorAll(".start-routine-button").forEach(
+        function (button) {
+            button.addEventListener("click", function () {
+                const routineId = button.dataset.routineId;
+
+                const routine = typeof getWorkoutRoutineById === "function"
+                    ? getWorkoutRoutineById(routineId)
+                    : allRoutines.find(function (item) {
+                        return item.id === routineId;
+                    });
+
+                startWorkoutRoutine(routine);
+            });
+        }
+    );
+}
+
+
+// =====================================================
+// GET ROUTINE STEPS
+// =====================================================
+
+function getRoutineSteps(routine) {
+    if (!routine) {
+        return [];
+    }
+
+    if (Array.isArray(routine.steps)) {
+        return routine.steps;
+    }
+
+    if (Array.isArray(routine.exercises)) {
+        return routine.exercises;
+    }
+
+    return [];
+}
+
+
+// =====================================================
+// NORMALIZE ROUTINE STEPS
 // =====================================================
 
 function normalizeRoutineStep(step) {
@@ -1072,7 +1328,20 @@ function normalizeRoutineStep(step) {
             type: "exercise",
             name: step,
             sets: 1,
-            durationSeconds: 0
+            reps: "",
+            durationSeconds: 0,
+            restSeconds: 0
+        };
+    }
+
+    if (!step || typeof step !== "object") {
+        return {
+            type: "exercise",
+            name: "",
+            sets: 1,
+            reps: "",
+            durationSeconds: 0,
+            restSeconds: 0
         };
     }
 
@@ -1089,22 +1358,32 @@ function normalizeRoutineStep(step) {
             durationSeconds:
                 Number(step.durationSeconds) ||
                 Number(step.seconds) ||
-                parseRestSeconds(step.duration || step.rest || "30 seconds")
+                parseRestSeconds(
+                    step.duration ||
+                    step.rest ||
+                    "30 seconds"
+                )
         };
     }
 
     return {
         type: "exercise",
+
         name:
             step.exercise ||
             step.exerciseName ||
             step.name ||
             "",
+
         sets: Math.max(1, Number(step.sets) || 1),
+
+        reps: step.reps || "",
+
         durationSeconds:
             Number(step.durationSeconds) ||
             Number(step.seconds) ||
             0,
+
         restSeconds:
             Number(step.restSeconds) ||
             parseRestSeconds(step.rest || "")
@@ -1125,27 +1404,42 @@ function startWorkoutRoutine(routine) {
 
     routineSteps = rawSteps
         .map(normalizeRoutineStep)
-        .filter(step => step.type === "rest" || step.name);
+        .filter(function (step) {
+            return step.type === "rest" || step.name;
+        });
 
     if (routineSteps.length === 0) {
         alert("This routine does not contain any exercise steps yet.");
         return;
     }
 
+    stopAllTimers();
+
     activeRoutine = routine;
     activeWorkout = null;
 
     routineStepIndex = 0;
     routineCompletedSteps = 0;
+
     routineCurrentSet = 1;
     routineTotalSets = 1;
+
     routineIsRunning = false;
 
     renderRoutineStep();
 }
 
+
+// =====================================================
+// RENDER THE CURRENT ROUTINE STEP
+// =====================================================
+
 function renderRoutineStep() {
     stopAllTimers();
+
+    if (!activeRoutine) {
+        return;
+    }
 
     if (routineStepIndex >= routineSteps.length) {
         showRoutineCompletion();
@@ -1163,11 +1457,15 @@ function renderRoutineStep() {
         return;
     }
 
-    const workout = workouts.find(item => item.name === step.name);
+    const workout = getWorkoutByNameSafe(step.name);
 
     if (!workout) {
+        console.warn("Routine exercise not found:", step.name);
+
         routineStepIndex++;
+
         renderRoutineStep();
+
         return;
     }
 
@@ -1188,12 +1486,18 @@ function renderRoutineStep() {
     exerciseSeconds = duration;
 
     timerOriginalSeconds =
-        Number(step.restSeconds) ||
-        parseRestSeconds(workout.rest);
+        step.restSeconds > 0
+            ? step.restSeconds
+            : getWorkoutRestSeconds(workout);
 
     timerSeconds = timerOriginalSeconds;
 
     const nextStep = routineSteps[routineStepIndex + 1];
+
+    const displayedReps =
+        step.reps ||
+        workout.reps ||
+        "Follow instructions";
 
     createWorkoutModal(`
         <p class="modal-brand">FRANZ WORKOUT ASSISTANCE</p>
@@ -1210,7 +1514,7 @@ function renderRoutineStep() {
         </div>
 
         <p>
-            Exercise ${routineStepIndex + 1}
+            Step ${routineStepIndex + 1}
             of ${routineSteps.length}
         </p>
 
@@ -1218,36 +1522,47 @@ function renderRoutineStep() {
 
         <p>
             <strong>Target:</strong>
-            ${escapeHtml(workout.target)}
+            ${escapeHtml(workout.target || "General fitness")}
         </p>
 
-        <p>${escapeHtml(workout.description)}</p>
+        <p>${escapeHtml(workout.description || "")}</p>
 
         ${
             workout.instructions
-                ? `<p><strong>Instructions:</strong>
-                   ${escapeHtml(workout.instructions)}</p>`
+                ? `
+                    <p>
+                        <strong>Instructions:</strong>
+                        ${escapeHtml(workout.instructions)}
+                    </p>
+                `
                 : ""
         }
 
         <div class="modal-details">
+
             <div>
                 <strong>${routineCurrentSet}/${routineTotalSets}</strong>
                 <span>SET</span>
             </div>
 
             <div>
-                <strong>${escapeHtml(workout.reps)}</strong>
+                <strong>${escapeHtml(displayedReps)}</strong>
                 <span>REPS / TIME</span>
             </div>
 
             <div>
-                <strong>${escapeHtml(workout.rest)}</strong>
+                <strong>${escapeHtml(
+                    timerOriginalSeconds > 0
+                        ? formatTime(timerOriginalSeconds)
+                        : "As needed"
+                )}</strong>
                 <span>REST</span>
             </div>
+
         </div>
 
         <div class="timer-box">
+
             <p>SET PROGRESS</p>
 
             <h3 id="routineSetProgress">
@@ -1255,31 +1570,38 @@ function renderRoutineStep() {
             </h3>
 
             <div class="timer-buttons">
+
                 <button
                     type="button"
                     onclick="completeRoutineSet()">
                     COMPLETE SET
                 </button>
+
             </div>
+
         </div>
 
         ${
             duration > 0
                 ? `
                     <div class="timer-box">
+
                         <p>EXERCISE TIMER</p>
 
-                        <div id="exerciseTimerDisplay"
-                             class="timer-display">
+                        <div
+                            id="exerciseTimerDisplay"
+                            class="timer-display">
                             ${formatTime(duration)}
                         </div>
 
-                        <div id="exerciseTimerStatus"
-                             class="timer-status">
+                        <div
+                            id="exerciseTimerStatus"
+                            class="timer-status">
                             Ready
                         </div>
 
                         <div class="timer-buttons">
+
                             <button
                                 type="button"
                                 onclick="startExerciseTimer()">
@@ -1299,18 +1621,29 @@ function renderRoutineStep() {
                                 onclick="resetExerciseTimer()">
                                 RESET
                             </button>
+
                         </div>
+
                     </div>
                 `
                 : `
                     <div class="timer-box">
+
                         <p>REPETITION GUIDE</p>
-                        <h3>${escapeHtml(workout.reps)}</h3>
+
+                        <h3>${escapeHtml(displayedReps)}</h3>
+
+                        <p>
+                            Complete the prescribed repetitions
+                            with controlled movements.
+                        </p>
+
                     </div>
                 `
         }
 
         <div class="timer-box">
+
             <p>REST TIMER</p>
 
             <div id="timerDisplay" class="timer-display">
@@ -1322,7 +1655,10 @@ function renderRoutineStep() {
             </div>
 
             <div class="timer-buttons">
-                <button type="button" onclick="startTimer()">
+
+                <button
+                    type="button"
+                    onclick="startTimer()">
                     START REST
                 </button>
 
@@ -1339,11 +1675,15 @@ function renderRoutineStep() {
                     onclick="resetTimer()">
                     RESET
                 </button>
+
             </div>
+
         </div>
 
         <div class="routine-next-step">
+
             <strong>UP NEXT</strong>
+
             <p>
                 ${
                     nextStep
@@ -1351,9 +1691,11 @@ function renderRoutineStep() {
                         : "Final step"
                 }
             </p>
+
         </div>
 
         <div class="timer-buttons">
+
             <button
                 type="button"
                 class="timer-secondary"
@@ -1366,10 +1708,12 @@ function renderRoutineStep() {
                 onclick="nextRoutineStep()">
                 NEXT EXERCISE
             </button>
+
         </div>
 
         <p class="form-reminder">
-            Follow your own pace, use proper form, and rest whenever needed.
+            Follow your own pace, use proper form,
+            and rest whenever needed.
         </p>
 
         <button
@@ -1384,35 +1728,59 @@ function renderRoutineStep() {
     updateExerciseTimerDisplay();
 }
 
+
+// =====================================================
+// COMPLETE A ROUTINE SET
+// =====================================================
+
 function completeRoutineSet() {
     if (!activeRoutine) {
+        return;
+    }
+
+    const progress = document.getElementById("routineSetProgress");
+
+    if (
+        progress &&
+        progress.dataset.completed === "true"
+    ) {
         return;
     }
 
     if (routineCurrentSet < routineTotalSets) {
         routineCurrentSet++;
 
-        const progress = document.getElementById("routineSetProgress");
-
         if (progress) {
             progress.textContent =
-                `Set ${routineCurrentSet} of ${routineTotalSets}`;
+                "Set " +
+                routineCurrentSet +
+                " of " +
+                routineTotalSets;
         }
 
         playBeep(750, 120);
-    } else {
-        const progress = document.getElementById("routineSetProgress");
 
-        if (progress) {
-            progress.textContent = "All sets completed!";
-        }
-
-        playCompletionSound();
+        return;
     }
+
+    if (progress) {
+        progress.textContent = "All sets completed!";
+        progress.dataset.completed = "true";
+    }
+
+    playCompletionSound();
 }
 
+
+// =====================================================
+// ROUTINE RECOVERY STEP
+// =====================================================
+
 function renderRoutineRest(step, progressPercent) {
-    const duration = Math.max(1, Number(step.durationSeconds) || 30);
+    const duration = Math.max(
+        1,
+        Number(step.durationSeconds) || 30
+    );
 
     timerOriginalSeconds = duration;
     timerSeconds = duration;
@@ -1430,17 +1798,22 @@ function renderRoutineRest(step, progressPercent) {
         <h2>${escapeHtml(activeRoutine.name)}</h2>
 
         <div class="routine-progress-track">
+
             <div
                 class="routine-progress-fill"
                 style="width:${progressPercent}%">
             </div>
+
         </div>
 
         <h3>Recovery Time</h3>
 
-        <p>Take a short break and prepare for your next exercise.</p>
+        <p>
+            Take a short break and prepare for your next exercise.
+        </p>
 
         <div class="timer-box">
+
             <p>REST TIMER</p>
 
             <div id="timerDisplay" class="timer-display">
@@ -1452,7 +1825,10 @@ function renderRoutineRest(step, progressPercent) {
             </div>
 
             <div class="timer-buttons">
-                <button type="button" onclick="startTimer()">
+
+                <button
+                    type="button"
+                    onclick="startTimer()">
                     START REST
                 </button>
 
@@ -1469,7 +1845,9 @@ function renderRoutineRest(step, progressPercent) {
                     onclick="resetTimer()">
                     RESET
                 </button>
+
             </div>
+
         </div>
 
         <p>
@@ -1494,6 +1872,11 @@ function renderRoutineRest(step, progressPercent) {
     updateTimerDisplay();
 }
 
+
+// =====================================================
+// ADVANCE TO THE NEXT ROUTINE STEP
+// =====================================================
+
 function nextRoutineStep() {
     if (!activeRoutine) {
         return;
@@ -1507,6 +1890,7 @@ function nextRoutineStep() {
     renderRoutineStep();
 }
 
+
 function skipRoutineStep() {
     if (!activeRoutine) {
         return;
@@ -1518,6 +1902,11 @@ function skipRoutineStep() {
 
     renderRoutineStep();
 }
+
+
+// =====================================================
+// ROUTINE COMPLETION
+// =====================================================
 
 function showRoutineCompletion() {
     stopAllTimers();
@@ -1531,10 +1920,18 @@ function showRoutineCompletion() {
 
         <p>
             You reached the end of
-            <strong>${escapeHtml(activeRoutine?.name || "your routine")}</strong>.
+            <strong>
+                ${escapeHtml(activeRoutine?.name || "your routine")}
+            </strong>.
         </p>
 
-        <p>Great job completing your planned workout session.</p>
+        <p>
+            Great job completing your planned workout session.
+        </p>
+
+        <p>
+            Remember to cool down and drink water as needed.
+        </p>
 
         <button
             type="button"
@@ -1549,7 +1946,7 @@ function showRoutineCompletion() {
 
 
 // =====================================================
-// CLOSE MODAL
+// CLOSE THE WORKOUT MODAL
 // =====================================================
 
 function closeWorkoutModal() {
@@ -1564,19 +1961,29 @@ function closeWorkoutModal() {
     document.body.classList.remove("modal-open");
 
     activeRoutine = null;
+    activeWorkout = null;
+
     routineSteps = [];
     routineStepIndex = 0;
+    routineCompletedSteps = 0;
+
+    routineCurrentSet = 1;
+    routineTotalSets = 1;
+
+    individualCurrentSet = 1;
+    individualTotalSets = 1;
+
     routineIsRunning = false;
 
-    activeWorkout = null;
+    workoutModalElement = null;
 }
 
 
 // =====================================================
-// ESC KEY
+// ESCAPE KEY SUPPORT
 // =====================================================
 
-document.addEventListener("keydown", event => {
+document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
         closeWorkoutModal();
     }
@@ -1584,13 +1991,24 @@ document.addEventListener("keydown", event => {
 
 
 // =====================================================
-// INITIALIZE
+// INITIALIZE THE WEBSITE
 // =====================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+function initializeWorkoutSystem() {
     ensureRoutineInterface();
-});
+    displayWorkouts("All");
+}
 
-// Also initialize if this script runs after DOMContentLoaded.
-ensureRoutineInterface();
-displayWorkouts("All");
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeWorkoutSystem
+    );
+} else {
+    initializeWorkoutSystem();
+}
+
+
+// =====================================================
+// END OF FRANZ WORKOUT ASSISTANCE SCRIPT
+// =====================================================
