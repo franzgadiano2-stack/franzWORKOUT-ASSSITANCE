@@ -279,22 +279,50 @@ function displayWorkouts(category = "All") {
     if (!Array.isArray(workouts)) {
         workoutContainer.innerHTML =
             "<p>Workout data could not be loaded.</p>";
-
         return;
     }
 
-    const selectedCategory = String(category || "All").toLowerCase();
+    const selectedCategory = String(category || "All")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
+    const categoryAliases = {
+        all: [],
+        chest: ["chest"],
+        back: ["back"],
+        legs: ["leg", "legs", "lowerbody"],
+        cardio: ["cardio", "endurance"],
+        shoulders: ["shoulder", "shoulders"],
+        arms: ["arm", "arms", "biceps", "triceps"],
+        core: ["core", "abs", "abdominal"]
+    };
+
+    const searchTerms = categoryAliases[selectedCategory] || [
+        selectedCategory
+    ];
 
     const filteredWorkouts = workouts.filter(function (workout) {
-        if (
-            selectedCategory === "all" ||
-            selectedCategory === ""
-        ) {
+        if (selectedCategory === "all" || selectedCategory === "") {
             return true;
         }
 
-        return String(workout.category || "").toLowerCase() ===
-            selectedCategory;
+        const workoutCategory = String(workout.category || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+
+        const workoutName = String(workout.name || "")
+            .toLowerCase();
+
+        const workoutTarget = String(workout.target || "")
+            .toLowerCase();
+
+        return searchTerms.some(function (term) {
+            return (
+                workoutCategory.includes(term) ||
+                workoutName.includes(term) ||
+                workoutTarget.includes(term)
+            );
+        });
     });
 
     workoutContainer.innerHTML = "";
@@ -303,116 +331,119 @@ function displayWorkouts(category = "All") {
         workoutContainer.innerHTML = `
             <div class="no-workouts-message">
                 <h3>No workouts found</h3>
-                <p>Try selecting another workout category.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    filteredWorkouts.forEach(function (workout) {
-        const originalIndex = workouts.indexOf(workout);
-
-        const card = document.createElement("article");
-
-        card.className = "workout-card";
-        card.tabIndex = 0;
-        card.setAttribute("role", "button");
-
-        card.setAttribute(
-            "aria-label",
-            "Open workout: " + workout.name
-        );
-
-        card.innerHTML = `
-            <div class="workout-card-content">
-
-                <span class="workout-category">
-                    ${escapeHtml(getWorkoutCategory(workout))}
-                </span>
-
-                <span class="workout-difficulty">
-                    ${escapeHtml(getWorkoutDifficulty(workout))}
-                </span>
-
-                <h3>${escapeHtml(workout.name)}</h3>
-
-                <p class="workout-target">
-                    <strong>Target:</strong>
-                    ${escapeHtml(workout.target || "General fitness")}
+                <p>
+                    There are currently no exercises matching
+                    this category. Try another category.
                 </p>
-
-                <p class="workout-description">
-                    ${escapeHtml(workout.description || "")}
-                </p>
-
-                <div class="workout-card-details">
-                    <span>
-                        <strong>Sets:</strong>
-                        ${escapeHtml(workout.sets ?? 1)}
-                    </span>
-
-                    <span>
-                        <strong>Reps / Time:</strong>
-                        ${escapeHtml(workout.reps || "Follow instructions")}
-                    </span>
-                </div>
 
                 <button
                     type="button"
-                    class="start-workout-button"
-                    data-workout-index="${originalIndex}">
-                    OPEN EXERCISE
+                    onclick="filterWorkouts('All')">
+                    VIEW ALL WORKOUTS
                 </button>
-
             </div>
         `;
+    } else {
+        filteredWorkouts.forEach(function (workout) {
+            const originalIndex = workouts.indexOf(workout);
 
-        card.addEventListener("click", function (event) {
-            if (event.target.closest("button")) {
-                return;
-            }
+            const card = document.createElement("article");
 
-            startWorkoutByIndex(originalIndex);
-        });
+            card.className = "workout-card";
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
 
-        card.addEventListener("keydown", function (event) {
-            if (
-                event.target === card &&
-                (event.key === "Enter" || event.key === " ")
-            ) {
-                event.preventDefault();
+            card.setAttribute(
+                "aria-label",
+                "Open workout: " + workout.name
+            );
+
+            card.innerHTML = `
+                <div class="workout-card-content">
+
+                    <span class="workout-category">
+                        ${escapeHtml(workout.category || "General")}
+                    </span>
+
+                    <span class="workout-difficulty">
+                        ${escapeHtml(workout.difficulty || "Beginner")}
+                    </span>
+
+                    <h3>${escapeHtml(workout.name)}</h3>
+
+                    <p class="workout-target">
+                        <strong>Target:</strong>
+                        ${escapeHtml(workout.target || "General fitness")}
+                    </p>
+
+                    <p class="workout-description">
+                        ${escapeHtml(workout.description || "")}
+                    </p>
+
+                    <div class="workout-card-details">
+                        <span>
+                            <strong>Sets:</strong>
+                            ${escapeHtml(workout.sets ?? 1)}
+                        </span>
+
+                        <span>
+                            <strong>Reps / Time:</strong>
+                            ${escapeHtml(workout.reps || "Follow instructions")}
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="start-workout-button">
+                        OPEN EXERCISE
+                    </button>
+
+                </div>
+            `;
+
+            card.addEventListener("click", function (event) {
+                if (event.target.closest("button")) {
+                    return;
+                }
+
                 startWorkoutByIndex(originalIndex);
-            }
+            });
+
+            card.addEventListener("keydown", function (event) {
+                if (
+                    event.target === card &&
+                    (event.key === "Enter" || event.key === " ")
+                ) {
+                    event.preventDefault();
+                    startWorkoutByIndex(originalIndex);
+                }
+            });
+
+            card.querySelector(".start-workout-button")
+                .addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    startWorkoutByIndex(originalIndex);
+                });
+
+            workoutContainer.appendChild(card);
         });
-
-        const button = card.querySelector(".start-workout-button");
-
-        button.addEventListener("click", function (event) {
-            event.stopPropagation();
-            startWorkoutByIndex(originalIndex);
-        });
-
-        workoutContainer.appendChild(card);
-    });
+    }
 
     if (resultsTitle) {
         resultsTitle.textContent =
             selectedCategory === "all"
-                ? "All Workouts"
-                : category + " Workouts";
+                ? "All Exercises"
+                : category + " Exercises";
     }
 
     if (resultsDescription) {
         resultsDescription.textContent =
             filteredWorkouts.length +
-            " workout" +
+            " exercise" +
             (filteredWorkouts.length === 1 ? "" : "s") +
             " available.";
     }
 }
-
-
 // =====================================================
 // CATEGORY FILTERING
 // =====================================================
