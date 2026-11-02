@@ -1812,3 +1812,174 @@ animation: none !important;
 transition: none !important;
 }
 }
+
+/* =========================================
+   CATEGORY WORKOUT POPUP
+   FRANZ WORKOUT ASSISTANCE
+========================================= */
+
+.category-popup-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 24px 0;
+    max-height: 48vh;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.category-popup-exercise {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+
+    width: 100%;
+    min-width: 0;
+    padding: 20px;
+
+    background: #1b1b1b;
+    color: #ffffff;
+
+    border: 1px solid #353535;
+    border-radius: 12px;
+
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        transform 0.25s ease;
+}
+
+.category-popup-exercise:hover {
+    background: #25201e;
+    border-color: #ff3c00;
+    transform: translateY(-3px);
+}
+
+.category-popup-exercise:focus-visible {
+    outline: 2px solid #ff3c00;
+    outline-offset: 3px;
+}
+
+.category-popup-exercise strong {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.category-popup-exercise span {
+    color: #aaaaaa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.category-popup-exercise .category-popup-action {
+    margin-top: 5px;
+    color: #ff3c00;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.category-popup-empty {
+    padding: 20px;
+    color: #bbbbbb;
+    background: #1b1b1b;
+    border: 1px solid #353535;
+    border-radius: 10px;
+    line-height: 1.7;
+}
+
+/* Popup heading and description */
+
+.workout-modal-content > h2 {
+    margin: 10px 0 12px;
+    color: #ffffff;
+    font-size: clamp(25px, 4vw, 36px);
+}
+
+.workout-modal-content > p:not(.modal-brand) {
+    color: #bdbdbd;
+    line-height: 1.7;
+}
+
+/* Close button */
+
+.workout-modal-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: absolute;
+    top: 14px;
+    right: 16px;
+
+    width: 40px;
+    height: 40px;
+
+    background: #242424;
+    color: #ffffff;
+
+    border: 1px solid #444444;
+    border-radius: 50%;
+
+    font-size: 25px;
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.workout-modal-x:hover {
+    background: #ff3c00;
+    border-color: #ff3c00;
+}
+
+/* Bottom close button */
+
+.workout-modal-content .modal-close-bottom {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 16px;
+
+    background: #ff3c00;
+    color: #ffffff;
+
+    border: none;
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.workout-modal-content .modal-close-bottom:hover {
+    background: #df3500;
+}
+
+/* Responsive layout for phones */
+
+@media (max-width: 650px) {
+    .category-popup-list {
+        grid-template-columns: 1fr;
+        max-height: 55vh;
+    }
+
+    .category-popup-exercise {
+        padding: 17px;
+    }
+
+    .workout-modal-x {
+        top: 10px;
+        right: 10px;
+    }
+}
