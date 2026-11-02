@@ -448,20 +448,52 @@ function displayWorkouts(category = "All") {
 // CATEGORY FILTERING
 // =====================================================
 
+```javascript
 function filterWorkouts(category) {
-    displayWorkouts(category || "All");
+    const selectedCategory = String(category || "All").toLowerCase();
 
-    const resultsSection = document.getElementById("workoutResults");
+    const categoryAliases = {
+        all: [],
+        chest: ["chest"],
+        back: ["back"],
+        legs: ["leg", "legs", "lowerbody"],
+        cardio: ["cardio", "endurance"],
+        shoulders: ["shoulder", "shoulders"],
+        arms: ["arm", "arms", "biceps", "triceps"],
+        core: ["core", "abs", "abdominal"]
+    };
 
-    if (resultsSection) {
-        setTimeout(function () {
-            resultsSection.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-        }, 100);
+    const searchTerms = categoryAliases[selectedCategory] || [
+        selectedCategory
+    ];
+
+    const matchingWorkouts = workouts.filter(function (workout) {
+        if (selectedCategory === "all") {
+            return true;
+        }
+
+        const categoryText = String(workout.category || "").toLowerCase();
+        const nameText = String(workout.name || "").toLowerCase();
+        const targetText = String(workout.target || "").toLowerCase();
+
+        return searchTerms.some(function (term) {
+            return (
+                categoryText.includes(term) ||
+                nameText.includes(term) ||
+                targetText.includes(term)
+            );
+        });
+    });
+
+    if (matchingWorkouts.length === 0) {
+        alert("No exercises were found for this category.");
+        return;
     }
+
+    showCategoryWorkoutPopup(category, matchingWorkouts);
 }
+```
+
 
 // =====================================================
 // WORKOUT RECOMMENDATIONS
@@ -2053,3 +2085,48 @@ if (document.readyState === "loading") {
 // =====================================================
 // END OF FRANZ WORKOUT ASSISTANCE SCRIPT
 // =====================================================
+```javascript
+function showCategoryWorkoutPopup(category, matchingWorkouts) {
+    const content = `
+        <p class="modal-brand">FRANZ WORKOUT ASSISTANCE</p>
+
+        <h2>${escapeHtml(category)} Workouts</h2>
+
+        <p>Select an exercise to view its instructions and timers.</p>
+
+        <div class="category-popup-list">
+            ${matchingWorkouts.map(function (workout) {
+                const index = workouts.indexOf(workout);
+
+                return `
+                    <button
+                        type="button"
+                        class="category-popup-exercise"
+                        onclick="startWorkoutByIndex(${index})">
+
+                        <strong>${escapeHtml(workout.name)}</strong>
+
+                        <span>
+                            ${escapeHtml(workout.difficulty || "Beginner")}
+                        </span>
+
+                        <span>
+                            ${escapeHtml(workout.target || "General fitness")}
+                        </span>
+
+                    </button>
+                `;
+            }).join("")}
+        </div>
+
+        <button
+            type="button"
+            class="modal-close-bottom"
+            onclick="closeWorkoutModal()">
+            CLOSE
+        </button>
+    `;
+
+    createWorkoutModal(content);
+}
+```
