@@ -450,8 +450,18 @@ function displayWorkouts(category = "All") {
 
 function filterWorkouts(category) {
     displayWorkouts(category || "All");
-}
 
+    const resultsSection = document.getElementById("workoutResults");
+
+    if (resultsSection) {
+        setTimeout(function () {
+            resultsSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }, 100);
+    }
+}
 
 // =====================================================
 // WORKOUT RECOMMENDATIONS
