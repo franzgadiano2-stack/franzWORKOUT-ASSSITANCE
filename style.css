@@ -1983,3 +1983,151 @@ transition: none !important;
         right: 10px;
     }
 }
+
+
+/* ==========================================
+   FRANZ WORKOUT ASSISTANCE
+   MOBILE WORKOUT CATEGORY REDESIGN
+========================================== */
+
+/* Desktop layout remains four columns */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch;
+}
+
+/* Make cards behave consistently */
+.category-card {
+    min-width: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* Keep category images properly cropped */
+.category-image {
+    width: 100%;
+    overflow: hidden;
+}
+
+.category-image img {
+    display: block;
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Tablet layout */
+@media (max-width: 900px) {
+    .category-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .category-image img {
+        height: 220px;
+    }
+}
+
+/* Mobile phone layout */
+@media (max-width: 600px) {
+
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .category-card {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        border-radius: 14px;
+    }
+
+    .category-image {
+        height: 135px;
+        flex-shrink: 0;
+    }
+
+    .category-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .category-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+        flex: 1;
+        padding: 12px;
+    }
+
+    .category-number {
+        font-size: 12px;
+        margin-bottom: 7px;
+    }
+
+    .category-content h3 {
+        font-size: 19px;
+        line-height: 1.2;
+        margin: 5px 0 9px;
+    }
+
+    .category-content p {
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 0 0 14px;
+    }
+
+    .view-category {
+        display: block;
+        margin-top: auto;
+        padding-top: 8px;
+
+        font-size: 11px;
+        line-height: 1.4;
+        font-weight: 800;
+    }
+
+    /* Reduce empty space above the category cards */
+    .category-section {
+        padding-top: 24px;
+        padding-bottom: 24px;
+    }
+}
+
+/* Extra-small phones */
+@media (max-width: 360px) {
+
+    .category-grid {
+        gap: 9px;
+    }
+
+    .category-image {
+        height: 110px;
+    }
+
+    .category-content {
+        padding: 9px;
+    }
+
+    .category-content h3 {
+        font-size: 17px;
+    }
+
+    .category-content p {
+        font-size: 11px;
+    }
+
+    .view-category {
+        font-size: 10px;
+    }
+}
